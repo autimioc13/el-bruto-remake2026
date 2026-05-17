@@ -1,5 +1,5 @@
-import { simulateCombat } from '../../src/engine/combat';
-import { Fighter } from '../../src/types';
+import { simulateCombat, applyEquipmentBonuses } from '../../src/engine/combat';
+import type { Fighter, Weapon, Pet } from '../../src/types';
 
 const makeF = (id: string, overrides: Partial<Fighter['stats']> = {}): Fighter => ({
   id,
@@ -54,5 +54,43 @@ describe('simulateCombat', () => {
     const slowResult = simulateCombat(makeF('a', { agility: 0 }), makeF('slow', { agility: 0 }));
     const slowDodges = slowResult.log_data.filter(e => e.action === 'dodge' && e.actor === 'attacker').length;
     expect(fastDodges).toBeGreaterThan(slowDodges);
+  });
+});
+
+const makeWeapon = (overrides: Partial<Weapon['effect']> = {}): Weapon => ({
+  id: 'w1', name: 'Test', weapon_type: 'sword', rarity: 'common',
+  effect: { strength_bonus: 0, agility_bonus: 0, endurance_bonus: 0, hp_bonus: 0, ...overrides },
+  min_level: 1, svg_key: 'sword',
+});
+
+const makePet = (overrides: Partial<Pet['effect']> = {}): Pet => ({
+  id: 'p1', name: 'Bear', pet_type: 'bear', evolution_stage: 1, evolves_to: null,
+  effect: { hp_bonus: 0, strength_bonus: 0, agility_bonus: 0, endurance_bonus: 0, ...overrides },
+  min_level: 1, svg_key: 'bear',
+});
+
+describe('applyEquipmentBonuses', () => {
+  it('adds weapon strength_bonus to fighter stats', () => {
+    const f = { ...makeF('a'), weapon: makeWeapon({ strength_bonus: 10 }) };
+    expect(applyEquipmentBonuses(f).stats.strength).toBe(f.stats.strength + 10);
+  });
+
+  it('adds pet hp_bonus to fighter stats', () => {
+    const f = { ...makeF('a'), pet: makePet({ hp_bonus: 15 }) };
+    expect(applyEquipmentBonuses(f).stats.hp).toBe(f.stats.hp + 15);
+  });
+
+  it('stacks weapon and pet bonuses', () => {
+    const f = {
+      ...makeF('a'),
+      weapon: makeWeapon({ agility_bonus: 5 }),
+      pet: makePet({ agility_bonus: 8 }),
+    };
+    expect(applyEquipmentBonuses(f).stats.agility).toBe(f.stats.agility + 13);
+  });
+
+  it('handles null weapon and pet without error', () => {
+    const f = { ...makeF('a'), weapon: null, pet: null };
+    expect(applyEquipmentBonuses(f).stats).toEqual(f.stats);
   });
 });

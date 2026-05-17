@@ -2,7 +2,23 @@ import { Fighter, CombatResult, CombatEvent } from '../types';
 
 const MAX_TURNS = 200;
 
+export function applyEquipmentBonuses(fighter: Fighter): Fighter {
+  const w = fighter.weapon?.effect;
+  const p = fighter.pet?.effect;
+  return {
+    ...fighter,
+    stats: {
+      hp:        fighter.stats.hp        + (w?.hp_bonus        ?? 0) + (p?.hp_bonus        ?? 0),
+      strength:  fighter.stats.strength  + (w?.strength_bonus  ?? 0) + (p?.strength_bonus  ?? 0),
+      agility:   fighter.stats.agility   + (w?.agility_bonus   ?? 0) + (p?.agility_bonus   ?? 0),
+      endurance: fighter.stats.endurance + (w?.endurance_bonus ?? 0) + (p?.endurance_bonus ?? 0),
+    },
+  };
+}
+
 export function simulateCombat(attacker: Fighter, defender: Fighter): CombatResult {
+  attacker = applyEquipmentBonuses(attacker);
+  defender = applyEquipmentBonuses(defender);
   let attackerHp = attacker.stats.hp;
   let defenderHp = defender.stats.hp;
   const log: CombatEvent[] = [];
