@@ -1,12 +1,11 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import characterRoutes from './routes/characters';
 import combatRoutes from './routes/combat';
 import rankingRoutes from './routes/ranking';
-
-dotenv.config();
+import weaponRoutes from './routes/weapons';
 
 const app = express();
 app.use(cors());
@@ -15,6 +14,7 @@ app.use('/auth', authRoutes);
 app.use('/characters', characterRoutes);
 app.use('/combat', combatRoutes);
 app.use('/ranking', rankingRoutes);
+app.use('/weapons', weaponRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
