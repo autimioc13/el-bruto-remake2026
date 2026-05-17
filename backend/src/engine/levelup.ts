@@ -1,4 +1,4 @@
-import { Character, Stats } from '../types';
+import { Character, Stats, UnlockType } from '../types';
 
 export interface LevelUpResult {
   character: Character;
@@ -46,4 +46,37 @@ export function applyLevelUp(character: Character): LevelUpResult {
   };
 
   return { character: updated, reward: `+${increment} ${LABELS[stat]}` };
+}
+
+export function getRankName(level: number): string {
+  if (level >= 25) return 'Cazador';
+  if (level >= 20) return 'Berserker';
+  if (level >= 15) return 'Monje';
+  if (level >= 10) return 'Asesino';
+  if (level >= 5) return 'Gladiador';
+  return 'Bruto';
+}
+
+export function determineRewardType(level: number): UnlockType {
+  const roll = Math.random();
+  if (level < 3) return roll < 0.7 ? 'stat' : 'skill';
+  if (roll < 0.40) return 'stat';
+  if (roll < 0.65) return 'skill';
+  if (roll < 0.85) return 'weapon';
+  return 'pet';
+}
+
+export function applyStatIncrease(character: Character): { character: Character; label: string } {
+  const stat = STAT_KEYS[Math.floor(Math.random() * STAT_KEYS.length)];
+  const increment = INCREMENTS[stat];
+  return {
+    character: {
+      ...character,
+      level: character.level + 1,
+      xp: 0,
+      xp_to_next_level: Math.floor(character.xp_to_next_level * 1.5),
+      stats: { ...character.stats, [stat]: character.stats[stat] + increment },
+    },
+    label: `+${increment} ${LABELS[stat]}`,
+  };
 }

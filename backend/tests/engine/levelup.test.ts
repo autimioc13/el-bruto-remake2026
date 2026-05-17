@@ -1,4 +1,4 @@
-import { calculateXpGain, applyLevelUp, shouldLevelUp } from '../../src/engine/levelup';
+import { calculateXpGain, applyLevelUp, shouldLevelUp, applyStatIncrease, determineRewardType, getRankName } from '../../src/engine/levelup';
 import { Character } from '../../src/types';
 
 const makeChar = (overrides: Partial<Character> = {}): Character => ({
@@ -53,5 +53,50 @@ describe('applyLevelUp', () => {
     const r = applyLevelUp(makeChar({ xp: 100, xp_to_next_level: 100 }));
     expect(typeof r.reward).toBe('string');
     expect(r.reward.length).toBeGreaterThan(0);
+  });
+});
+
+describe('getRankName', () => {
+  it('returns Bruto for level 1', () => expect(getRankName(1)).toBe('Bruto'));
+  it('returns Gladiador for level 5', () => expect(getRankName(5)).toBe('Gladiador'));
+  it('returns Asesino for level 10', () => expect(getRankName(10)).toBe('Asesino'));
+  it('returns Monje for level 15', () => expect(getRankName(15)).toBe('Monje'));
+  it('returns Berserker for level 20', () => expect(getRankName(20)).toBe('Berserker'));
+  it('returns Cazador for level 25', () => expect(getRankName(25)).toBe('Cazador'));
+  it('returns Cazador for level 30', () => expect(getRankName(30)).toBe('Cazador'));
+});
+
+describe('determineRewardType', () => {
+  it('always returns a valid unlock type', () => {
+    const valid = ['stat', 'skill', 'weapon', 'pet'];
+    for (let i = 0; i < 50; i++) {
+      expect(valid).toContain(determineRewardType(10));
+    }
+  });
+});
+
+describe('applyStatIncrease', () => {
+  it('increments level by 1', () => {
+    const char = makeChar({ xp: 100, xp_to_next_level: 100 });
+    expect(applyStatIncrease(char).character.level).toBe(2);
+  });
+
+  it('resets xp to 0 and raises xp_to_next_level', () => {
+    const char = makeChar({ xp: 100, xp_to_next_level: 100 });
+    const r = applyStatIncrease(char);
+    expect(r.character.xp).toBe(0);
+    expect(r.character.xp_to_next_level).toBeGreaterThan(100);
+  });
+
+  it('increases total stat sum', () => {
+    const char = makeChar({ xp: 100, xp_to_next_level: 100 });
+    const before = char.stats.hp + char.stats.strength + char.stats.agility + char.stats.endurance;
+    const after = applyStatIncrease(char).character.stats;
+    expect(after.hp + after.strength + after.agility + after.endurance).toBeGreaterThan(before);
+  });
+
+  it('returns a non-empty label', () => {
+    const char = makeChar({ xp: 100, xp_to_next_level: 100 });
+    expect(applyStatIncrease(char).label.length).toBeGreaterThan(0);
   });
 });
