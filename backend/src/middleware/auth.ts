@@ -11,11 +11,12 @@ export interface AuthRequest extends Request {
 }
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'No token provided' });
     return;
   }
+  const token = authHeader.slice(7);
 
   const { data, error } = await supabaseAuth.auth.getUser(token);
   if (error || !data.user) {
