@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
-import { Character } from '../types';
+import type { Character } from '../types';
 import StatBar from '../components/StatBar';
 
 export default function Profile() {
