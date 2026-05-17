@@ -15,6 +15,43 @@ function randomStats(): Stats {
   };
 }
 
+async function enrichCharacter(char: any) {
+  const { data: weaponRow } = await supabase
+    .from('character_weapons')
+    .select('equipped, weapons(*)')
+    .eq('character_id', char.id)
+    .eq('equipped', true)
+    .single();
+
+  const { data: petRow } = await supabase
+    .from('character_pets')
+    .select('pets(*)')
+    .eq('character_id', char.id)
+    .single();
+
+  const { data: clanRow } = await supabase
+    .from('clan_members')
+    .select('role, clans(id, name)')
+    .eq('character_id', char.id)
+    .single();
+
+  const level = char.level ?? 1;
+  let rank = 'Bruto';
+  if (level >= 25) rank = 'Cazador';
+  else if (level >= 20) rank = 'Berserker';
+  else if (level >= 15) rank = 'Monje';
+  else if (level >= 10) rank = 'Asesino';
+  else if (level >= 5) rank = 'Gladiador';
+
+  return {
+    ...char,
+    rank,
+    equipped_weapon: (weaponRow as any)?.weapons ?? null,
+    pet: (petRow as any)?.pets ?? null,
+    clan: (clanRow as any)?.clans ?? null,
+  };
+}
+
 router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   const { name, gender, hair_color, skin_color, hair_style } = req.body;
 
@@ -62,12 +99,8 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
     .eq('user_id', req.userId!)
     .single();
 
-  if (error || !data) {
-    res.status(404).json({ error: 'Character not found' });
-    return;
-  }
-
-  res.json(data);
+  if (error || !data) { res.status(404).json({ error: 'Character not found' }); return; }
+  res.json(await enrichCharacter(data));
 });
 
 router.get('/:id', async (req, res: Response) => {
@@ -77,12 +110,8 @@ router.get('/:id', async (req, res: Response) => {
     .eq('id', req.params.id)
     .single();
 
-  if (error || !data) {
-    res.status(404).json({ error: 'Character not found' });
-    return;
-  }
-
-  res.json(data);
+  if (error || !data) { res.status(404).json({ error: 'Character not found' }); return; }
+  res.json(await enrichCharacter(data));
 });
 
 export default router;

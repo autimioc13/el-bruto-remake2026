@@ -2,8 +2,8 @@ import { Router, Response } from 'express';
 import { supabase } from '../db/supabase';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { simulateCombat } from '../engine/combat';
-import { calculateXpGain, shouldLevelUp, applyLevelUp } from '../engine/levelup';
-import { Fighter, Skill } from '../types';
+import { calculateXpGain, shouldLevelUp, applyStatIncrease, determineRewardType, getRankName } from '../engine/levelup';
+import { Fighter, Skill, Weapon, Pet } from '../types';
 
 const router = Router();
 
@@ -41,14 +41,42 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
     return;
   }
 
-  const toFighter = (char: any): Fighter => ({
+  const { data: atkWeapon } = await supabase
+    .from('character_weapons')
+    .select('weapons(*)')
+    .eq('character_id', atk.id)
+    .eq('equipped', true)
+    .single();
+
+  const { data: defWeapon } = await supabase
+    .from('character_weapons')
+    .select('weapons(*)')
+    .eq('character_id', def.id)
+    .eq('equipped', true)
+    .single();
+
+  const { data: atkPet } = await supabase
+    .from('character_pets')
+    .select('pets(*)')
+    .eq('character_id', atk.id)
+    .single();
+
+  const { data: defPet } = await supabase
+    .from('character_pets')
+    .select('pets(*)')
+    .eq('character_id', def.id)
+    .single();
+
+  const toFighter = (char: any, weaponRow: any, petRow: any): Fighter => ({
     id: char.id,
     name: char.name,
     stats: char.stats,
     skills: (char.character_skills || []).map((cs: any) => cs.skills as Skill).filter(Boolean),
+    weapon: (weaponRow as any)?.weapons ?? null,
+    pet: (petRow as any)?.pets ?? null,
   });
 
-  const result = simulateCombat(toFighter(atk), toFighter(def));
+  const result = simulateCombat(toFighter(atk, atkWeapon, atkPet), toFighter(def, defWeapon, defPet));
   const attackerWon = result.winner_id === atk.id;
 
   const { data: combatLog, error: logErr } = await supabase
@@ -79,20 +107,114 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
     losses: def.losses + (attackerWon ? 1 : 0),
   }).eq('id', def.id);
 
-  let levelUpReward: string | null = null;
+  let levelUpUnlock: { type: string; label: string } | null = null;
 
   if (attackerWon) {
     const xpGain = calculateXpGain(atk.level, def.level);
     const withXp = { ...atk, xp: atk.xp + xpGain };
+
     if (shouldLevelUp(withXp)) {
-      const { character: leveled, reward } = applyLevelUp(withXp);
-      levelUpReward = reward;
+      const { character: leveled, label } = applyStatIncrease(withXp);
+      const rewardType = determineRewardType(leveled.level);
+      const prevRank = getRankName(atk.level);
+      const newRank = getRankName(leveled.level);
+
       await supabase.from('characters').update({
         xp: leveled.xp,
         level: leveled.level,
         xp_to_next_level: leveled.xp_to_next_level,
         stats: leveled.stats,
       }).eq('id', atk.id);
+
+      levelUpUnlock = { type: 'stat', label };
+
+      if (rewardType === 'weapon') {
+        const { data: owned } = await supabase
+          .from('character_weapons')
+          .select('weapon_id')
+          .eq('character_id', atk.id);
+        const ownedIds = (owned || []).map((r: any) => r.weapon_id);
+
+        const { data: available } = await supabase
+          .from('weapons')
+          .select('*')
+          .lte('min_level', leveled.level)
+          .not('id', 'in', ownedIds.length ? `(${ownedIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)');
+
+        if (available && available.length > 0) {
+          const picked = available[Math.floor(Math.random() * available.length)] as Weapon;
+          const isFirst = ownedIds.length === 0;
+          await supabase.from('character_weapons').insert({
+            character_id: atk.id,
+            weapon_id: picked.id,
+            equipped: isFirst,
+          });
+          levelUpUnlock = { type: 'weapon', label: `¡Nueva arma: ${picked.name} (${picked.rarity})!` };
+        } else {
+          levelUpUnlock = { type: 'stat', label };
+        }
+      } else if (rewardType === 'pet') {
+        const { data: currentPet } = await supabase
+          .from('character_pets')
+          .select('pet_id, pets(evolves_to)')
+          .eq('character_id', atk.id)
+          .single();
+
+        if (currentPet) {
+          const evolvesTo = (currentPet as any).pets?.evolves_to;
+          if (evolvesTo) {
+            const { data: evolved } = await supabase.from('pets').select('*').eq('id', evolvesTo).single();
+            if (evolved && leveled.level >= (evolved as Pet).min_level) {
+              await supabase.from('character_pets').update({ pet_id: evolvesTo }).eq('character_id', atk.id);
+              levelUpUnlock = { type: 'pet', label: `¡Mascota evolucionó: ${(evolved as Pet).name}!` };
+            } else {
+              levelUpUnlock = { type: 'stat', label };
+            }
+          } else {
+            levelUpUnlock = { type: 'stat', label };
+          }
+        } else {
+          const { data: available } = await supabase
+            .from('pets')
+            .select('*')
+            .lte('min_level', leveled.level)
+            .eq('evolution_stage', 1);
+
+          if (available && available.length > 0) {
+            const picked = available[Math.floor(Math.random() * available.length)] as Pet;
+            await supabase.from('character_pets').insert({ character_id: atk.id, pet_id: picked.id });
+            levelUpUnlock = { type: 'pet', label: `¡Nueva mascota: ${picked.name}!` };
+          } else {
+            levelUpUnlock = { type: 'stat', label };
+          }
+        }
+      } else if (rewardType === 'skill') {
+        const { data: charSkills } = await supabase
+          .from('character_skills')
+          .select('skill_id')
+          .eq('character_id', atk.id);
+        const ownedSkillIds = (charSkills || []).map((r: any) => r.skill_id);
+
+        const { data: available } = await supabase
+          .from('skills')
+          .select('*')
+          .not('id', 'in', ownedSkillIds.length ? `(${ownedSkillIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)');
+
+        if (available && available.length > 0) {
+          const picked = available[Math.floor(Math.random() * available.length)];
+          await supabase.from('character_skills').insert({ character_id: atk.id, skill_id: picked.id });
+          levelUpUnlock = { type: 'skill', label: `¡Nueva habilidad: ${picked.name}!` };
+        } else {
+          levelUpUnlock = { type: 'stat', label };
+        }
+      }
+
+      if (prevRank !== newRank) {
+        levelUpUnlock = {
+          ...levelUpUnlock!,
+          label: levelUpUnlock!.label + ` | ¡Nuevo rango: ${newRank}!`,
+        };
+      }
     } else {
       await supabase.from('characters').update({ xp: withXp.xp }).eq('id', atk.id);
     }
@@ -104,7 +226,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
     attacker_name: atk.name,
     defender_name: def.name,
     log_data: result.log_data,
-    level_up: levelUpReward,
+    level_up: levelUpUnlock,
   });
 });
 
