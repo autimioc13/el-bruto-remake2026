@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Phaser from 'phaser';
 import { CombatScene } from '../game/CombatScene';
-import type { CombatSceneConfig } from '../game/CombatScene';
+import type { CombatSceneConfig, CharacterConfig } from '../game/CombatScene';
 import api from '../api/client';
 
 interface CombatData {
@@ -11,7 +11,17 @@ interface CombatData {
   attacker_name: string;
   defender_name: string;
   level_up: string | null;
+  attacker_config?: CharacterConfig;
+  defender_config?: CharacterConfig;
 }
+
+const DEFAULT_CHAR_CONFIG: CharacterConfig = {
+  skinColor: '#FDBCB4',
+  hairColor: '#3B1F00',
+  rank: 'Bruto',
+  weaponType: null,
+  petType: null,
+};
 
 export default function Arena() {
   const { combatId } = useParams();
@@ -34,6 +44,8 @@ export default function Arena() {
       attackerName: combatData.attacker_name,
       defenderName: combatData.defender_name,
       winnerId: combatData.winner_id,
+      attackerConfig: combatData.attacker_config ?? DEFAULT_CHAR_CONFIG,
+      defenderConfig: combatData.defender_config ?? DEFAULT_CHAR_CONFIG,
       onComplete: (winnerId) => {
         setDone({ winnerId, levelUp: combatData.level_up });
         gameRef.current?.destroy(true);
