@@ -59,6 +59,7 @@ async function processQueue() {
     const display = new BruteDisplay(job.gender, job.colors, job.body, 'left', 2);
     display.onLoad(() => {
       try {
+        renderer.render(display.container);
         const img = renderer.plugins.extract.image(display.container, 'image/png', 1) as HTMLImageElement;
         display.destroy();
         job.resolve(img.src);

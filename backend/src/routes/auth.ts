@@ -40,4 +40,20 @@ router.post('/login', async (req: Request, res: Response) => {
   res.json({ user: data.user, session: data.session });
 });
 
+router.post('/refresh', async (req: Request, res: Response) => {
+  const { refresh_token } = req.body;
+  if (!refresh_token) {
+    res.status(400).json({ error: 'refresh_token required' });
+    return;
+  }
+
+  const { data, error } = await supabaseAuth.auth.refreshSession({ refresh_token });
+  if (error || !data.session) {
+    res.status(401).json({ error: 'Session expired. Please log in again.' });
+    return;
+  }
+
+  res.json({ session: data.session });
+});
+
 export default router;
