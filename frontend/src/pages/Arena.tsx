@@ -8,6 +8,7 @@ import api from '../api/client';
 interface CombatData {
   log_data: any[];
   winner_id: string;
+  winner_name: string;
   attacker_name: string;
   defender_name: string;
   attacker_appearance?: { skin_color: string; hair_color: string };
@@ -60,7 +61,7 @@ export default function Arena() {
   const { combatId } = useParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
-  const [done, setDone] = useState<{ winnerId: string; levelUp: { type: string; label: string } | null } | null>(null);
+  const [done, setDone] = useState<{ winnerName: string; levelUp: { type: string; label: string } | null } | null>(null);
   const [combatData, setCombatData] = useState<CombatData | null>(null);
   const navigate = useNavigate();
 
@@ -71,8 +72,8 @@ export default function Arena() {
 
   useEffect(() => {
     if (!combatData || !containerRef.current || gameRef.current) return;
-    gameRef.current = buildGame(containerRef.current, combatData, (winnerId) => {
-      setDone({ winnerId, levelUp: combatData.level_up });
+    gameRef.current = buildGame(containerRef.current, combatData, (_winnerId) => {
+      setDone({ winnerName: combatData.winner_name, levelUp: combatData.level_up });
       gameRef.current?.destroy(true);
       gameRef.current = null;
     });
@@ -91,7 +92,7 @@ export default function Arena() {
       {done && (
         <div className="bg-amber-100 border-4 border-amber-800 rounded-lg p-10 text-center shadow-2xl">
           <h2 className="text-4xl font-bold text-amber-900 mb-2">¡Combate terminado!</h2>
-          <p className="text-amber-700 mb-4">Ganador: <span className="font-bold">{done.winnerId}</span></p>
+          <p className="text-amber-700 mb-4">Ganador: <span className="font-bold">{done.winnerName}</span></p>
           {done.levelUp && (
             <p className="text-green-700 font-bold text-lg mb-4">¡Subiste de nivel! {done.levelUp.label}</p>
           )}

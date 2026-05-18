@@ -7,11 +7,17 @@ import CharacterSprite from '../components/CharacterSprite';
 import RankBadge from '../components/RankBadge';
 import WeaponIcon from '../components/WeaponIcon';
 
+interface SkillEntry {
+  skill_id: string;
+  skills: { id: string; name: string; description: string; category?: string } | null;
+}
+
 interface EnrichedCharacter extends Character {
   rank: string;
   equipped_weapon: { name: string; weapon_type: string; rarity: string; effect: any } | null;
   pet: { name: string; pet_type: string; evolution_stage: number; effect: any } | null;
   clan: { id: string; name: string } | null;
+  character_skills?: SkillEntry[];
 }
 
 export default function Profile() {
@@ -131,6 +137,24 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {character.character_skills && character.character_skills.length > 0 && (
+          <div className="bg-amber-100 border-2 border-amber-700 rounded-lg p-4 mb-4">
+            <h2 className="text-lg font-bold text-amber-900 mb-3">Habilidades</h2>
+            <div className="flex flex-wrap gap-2">
+              {character.character_skills.map((entry) => entry.skills && (
+                <div key={entry.skill_id}
+                  className="bg-amber-200 border border-amber-600 rounded px-2 py-1"
+                  title={entry.skills.description}>
+                  <span className="text-amber-900 text-sm font-semibold">{entry.skills.name}</span>
+                  {entry.skills.category && (
+                    <span className="ml-1 text-xs text-amber-600">({entry.skills.category})</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {!isOwnProfile && (
           <button onClick={handleChallenge}

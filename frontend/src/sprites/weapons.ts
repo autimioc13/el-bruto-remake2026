@@ -47,6 +47,31 @@ export const WEAPON_SVGS: Record<string, string> = {
     <path d="M26,6 Q54,4 50,26 Q38,32 26,22 Z" fill="#212121"/>
     <path d="M26,6 Q54,4 50,26 Q44,22 40,16 Q46,8 36,6 Z" fill="#424242"/>
   </svg>`,
+  fan: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
+    <path d="M22,40 L4,10 Q22,2 40,10 Z" fill="#E91E63" opacity="0.85"/>
+    <line x1="22" y1="40" x2="4" y2="10" stroke="#880E4F" stroke-width="1.2"/>
+    <line x1="22" y1="40" x2="10" y2="7" stroke="#880E4F" stroke-width="1.2"/>
+    <line x1="22" y1="40" x2="17" y2="4" stroke="#880E4F" stroke-width="1.2"/>
+    <line x1="22" y1="40" x2="23" y2="4" stroke="#880E4F" stroke-width="1.2"/>
+    <line x1="22" y1="40" x2="30" y2="6" stroke="#880E4F" stroke-width="1.2"/>
+    <line x1="22" y1="40" x2="38" y2="11" stroke="#880E4F" stroke-width="1.2"/>
+    <rect x="20" y="37" width="4" height="6" rx="1" fill="#6B3A2A"/>
+  </svg>`,
+  whip: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="70" viewBox="0 0 30 70">
+    <rect x="11" y="46" width="6" height="22" rx="3" fill="#6B3A2A"/>
+    <path d="M14,46 Q4,32 14,18 Q20,8 26,4" stroke="#4A2416" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M26,4 Q30,0 28,6" stroke="#4A2416" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </svg>`,
+  racket: `<svg xmlns="http://www.w3.org/2000/svg" width="34" height="70" viewBox="0 0 34 70">
+    <rect x="14" y="47" width="6" height="22" rx="3" fill="#6B3A2A"/>
+    <ellipse cx="17" cy="28" rx="13" ry="18" fill="none" stroke="#DAA520" stroke-width="3"/>
+    <line x1="6" y1="21" x2="28" y2="21" stroke="#E0E0E0" stroke-width="1"/>
+    <line x1="5" y1="28" x2="29" y2="28" stroke="#E0E0E0" stroke-width="1"/>
+    <line x1="7" y1="35" x2="27" y2="35" stroke="#E0E0E0" stroke-width="1"/>
+    <line x1="11" y1="11" x2="11" y2="46" stroke="#E0E0E0" stroke-width="1"/>
+    <line x1="17" y1="10" x2="17" y2="46" stroke="#E0E0E0" stroke-width="1"/>
+    <line x1="23" y1="11" x2="23" y2="46" stroke="#E0E0E0" stroke-width="1"/>
+  </svg>`,
 };
 
 export const RARITY_COLORS: Record<string, string> = {

@@ -242,7 +242,8 @@ router.get('/:id', async (req, res: Response) => {
     return;
   }
 
-  res.json(data);
+  const winner_name = data.winner_id === data.attacker_id ? data.attacker_name : data.defender_name;
+  res.json({ ...data, winner_name });
 });
 
 export default router;
