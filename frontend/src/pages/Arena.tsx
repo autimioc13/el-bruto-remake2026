@@ -104,6 +104,7 @@ async function buildGame(
     attackerName: combatData.attacker_name,
     defenderName: combatData.defender_name,
     winnerId: combatData.winner_id,
+    winnerName: combatData.winner_name,
     attackerConfig: {
       skinColor: sprites.skinColor,
       hairColor: sprites.hairColor,
