@@ -15,6 +15,10 @@ export default function Landing() {
     try {
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
       const { data } = await api.post(endpoint, { email, password });
+      if (!data.session) {
+        setError('Cuenta creada. Revisa tu email para confirmar antes de entrar.');
+        return;
+      }
       localStorage.setItem('session', JSON.stringify(data.session));
       navigate('/profile');
     } catch (err: any) {
