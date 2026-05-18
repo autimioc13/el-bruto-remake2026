@@ -10,8 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@pixi/filter-outline": "^4.2.0",
     "axios": "^1.16.1",
+    "labrute-static-fla-parser": "^1.0.6",
     "phaser": "^4.1.0",
+    "pixi.js": "^6.5.9",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.1"

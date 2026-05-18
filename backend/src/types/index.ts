@@ -10,6 +10,8 @@ export interface Appearance {
   hair_color: string;
   skin_color: string;
   hair_style: string;
+  body?: string;
+  colors?: string;
 }
 
 export interface SkillEffect {

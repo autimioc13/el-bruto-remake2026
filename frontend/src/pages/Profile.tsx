@@ -4,6 +4,7 @@ import api from '../api/client';
 import type { Character } from '../types';
 import StatBar from '../components/StatBar';
 import CharacterSprite from '../components/CharacterSprite';
+import BruteRenderer from '../components/BruteRenderer';
 import RankBadge from '../components/RankBadge';
 import WeaponIcon from '../components/WeaponIcon';
 
@@ -117,13 +118,23 @@ export default function Profile() {
           <div className="relative flex-shrink-0">
             <div className="rounded-xl p-3 flex items-center justify-center"
               style={{ background: 'rgba(0,0,0,0.5)', border: '2px solid rgba(180,130,20,0.4)', minWidth: 90 }}>
-              <CharacterSprite
-                skinColor={character.appearance.skin_color}
-                hairColor={character.appearance.hair_color}
-                rank={character.rank}
-                hairStyle={character.appearance.hair_style}
-                size={72}
-              />
+              {character.appearance.body && character.appearance.colors ? (
+                <BruteRenderer
+                  gender={character.appearance.gender}
+                  body={character.appearance.body}
+                  colors={character.appearance.colors}
+                  size={72}
+                  animate
+                />
+              ) : (
+                <CharacterSprite
+                  skinColor={character.appearance.skin_color}
+                  hairColor={character.appearance.hair_color}
+                  rank={character.rank}
+                  hairStyle={character.appearance.hair_style}
+                  size={72}
+                />
+              )}
             </div>
           </div>
           {/* Info */}

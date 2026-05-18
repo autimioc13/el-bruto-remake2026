@@ -53,7 +53,7 @@ async function enrichCharacter(char: any) {
 }
 
 router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
-  const { name, gender, hair_color, skin_color, hair_style } = req.body;
+  const { name, gender, hair_color, skin_color, hair_style, body, colors } = req.body;
 
   if (!name || !gender) {
     res.status(400).json({ error: 'name and gender are required' });
@@ -76,6 +76,8 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
     hair_color: hair_color || '#8B4513',
     skin_color: skin_color || '#FDBCB4',
     hair_style: hair_style || 'short',
+    ...(body ? { body } : {}),
+    ...(colors ? { colors } : {}),
   };
 
   const { data, error } = await supabase

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import CharacterSprite from '../components/CharacterSprite';
+import BruteRenderer from '../components/BruteRenderer';
 import RankBadge from '../components/RankBadge';
 
 interface RankingEntry {
@@ -10,7 +11,7 @@ interface RankingEntry {
   level: number;
   wins: number;
   losses: number;
-  appearance: { skin_color: string; hair_color: string; hair_style?: string };
+  appearance: { skin_color: string; hair_color: string; hair_style?: string; gender: 'male' | 'female'; body?: string; colors?: string };
   rank?: string;
   clan?: { name: string } | null;
 }
@@ -92,13 +93,23 @@ export default function Ranking() {
 
               {/* Sprite */}
               <div className="cursor-pointer flex-shrink-0" onClick={() => navigate(`/profile/${char.id}`)}>
-                <CharacterSprite
-                  skinColor={char.appearance.skin_color}
-                  hairColor={char.appearance.hair_color}
-                  rank={char.rank ?? 'Bruto'}
-                  hairStyle={char.appearance.hair_style ?? 'short'}
-                  size={38}
-                />
+                {char.appearance.body && char.appearance.colors ? (
+                  <BruteRenderer
+                    gender={char.appearance.gender}
+                    body={char.appearance.body}
+                    colors={char.appearance.colors}
+                    size={38}
+                    animate={false}
+                  />
+                ) : (
+                  <CharacterSprite
+                    skinColor={char.appearance.skin_color}
+                    hairColor={char.appearance.hair_color}
+                    rank={char.rank ?? 'Bruto'}
+                    hairStyle={char.appearance.hair_style ?? 'short'}
+                    size={38}
+                  />
+                )}
               </div>
 
               {/* Info */}

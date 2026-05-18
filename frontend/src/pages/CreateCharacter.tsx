@@ -1,37 +1,43 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import CharacterSprite from '../components/CharacterSprite';
+import BruteRenderer from '../components/BruteRenderer';
+import { SKIN_M, SKIN_F, HAIR_M, HAIR_F, makeColorsString } from '../utils/bruteColors';
+import { getRandomBody } from '../utils/bruteBody';
 
-const SKIN_COLORS = ['#FDBCB4', '#F5CBA7', '#D4956A', '#C68642', '#8D5524', '#4A2912'];
-const HAIR_COLORS = [
-  '#1a0a00', '#3d2005', '#8B4513', '#c8851c', '#FFD700',
-  '#FF4500', '#dc143c', '#4B0082', '#808080', '#ffffff',
-];
-const HAIR_STYLES: { id: string; label: string; icon: string }[] = [
-  { id: 'short',  label: 'Corto',   icon: '💇' },
-  { id: 'long',   label: 'Largo',   icon: '🦱' },
-  { id: 'mohawk', label: 'Mohawk',  icon: '🤘' },
-  { id: 'bald',   label: 'Rapado',  icon: '🧑‍🦲' },
-];
+type Gender = 'male' | 'female';
 
 function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
 export default function CreateCharacter() {
   const [name, setName] = useState('');
-  const [skinColor, setSkinColor] = useState(SKIN_COLORS[0]);
-  const [hairColor, setHairColor] = useState(HAIR_COLORS[0]);
-  const [hairStyle, setHairStyle] = useState('short');
+  const [gender, setGender] = useState<Gender>('male');
+  const [skinColor, setSkinColor] = useState(SKIN_M[4]!);
+  const [hairColor, setHairColor] = useState(HAIR_M[0]!);
+  const [body, setBody] = useState(() => getRandomBody('male'));
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const skinPalette = gender === 'male' ? SKIN_M : SKIN_F;
+  const hairPalette = gender === 'male' ? HAIR_M : HAIR_F;
+  const colors = useMemo(() => makeColorsString(skinColor, hairColor), [skinColor, hairColor]);
+
+  const switchGender = (g: Gender) => {
+    setGender(g);
+    const skins = g === 'male' ? SKIN_M : SKIN_F;
+    const hairs = g === 'male' ? HAIR_M : HAIR_F;
+    setSkinColor(skins[4]!);
+    setHairColor(hairs[0]!);
+    setBody(getRandomBody(g));
+  };
+
   const randomize = () => {
-    setSkinColor(pick(SKIN_COLORS));
-    setHairColor(pick(HAIR_COLORS));
-    setHairStyle(pick(HAIR_STYLES).id);
+    setSkinColor(pick(skinPalette));
+    setHairColor(pick(hairPalette));
+    setBody(getRandomBody(gender));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,10 +47,12 @@ export default function CreateCharacter() {
     try {
       await api.post('/characters', {
         name,
-        gender: 'male',
+        gender,
         hair_color: hairColor,
         skin_color: skinColor,
-        hair_style: hairStyle,
+        hair_style: 'short',
+        body,
+        colors,
       });
       navigate('/profile');
     } catch (err: any) {
@@ -87,9 +95,10 @@ export default function CreateCharacter() {
                 background: 'rgba(0,0,0,0.45)',
                 border: '2px solid rgba(180,130,20,0.35)',
                 minWidth: 110,
+                minHeight: 140,
                 boxShadow: 'inset 0 0 30px rgba(0,0,0,0.6)',
               }}>
-              <CharacterSprite skinColor={skinColor} hairColor={hairColor} rank="Bruto" hairStyle={hairStyle} size={84} />
+              <BruteRenderer gender={gender} body={body} colors={colors} size={80} animate />
             </div>
             <button type="button" onClick={randomize}
               className="px-5 py-2 text-sm font-black rounded-lg transition-all hover:opacity-90 active:scale-95"
@@ -103,6 +112,26 @@ export default function CreateCharacter() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Gender */}
+            <div>
+              <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Género</label>
+              <div className="flex gap-2">
+                {(['male', 'female'] as Gender[]).map((g) => (
+                  <button key={g} type="button" onClick={() => switchGender(g)}
+                    className="flex-1 py-2 font-black text-sm rounded-lg transition-all"
+                    style={{
+                      background: gender === g ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.3)',
+                      border: `1px solid ${gender === g ? 'rgba(245,158,11,0.6)' : 'rgba(255,255,255,0.08)'}`,
+                      color: gender === g ? '#f59e0b' : '#6b7280',
+                    }}>
+                    {g === 'male' ? '♂ Masculino' : '♀ Femenino'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Name */}
             <div>
               <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Nombre del Bruto</label>
               <input
@@ -116,10 +145,11 @@ export default function CreateCharacter() {
               />
             </div>
 
+            {/* Skin color */}
             <div>
               <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Color de Piel</label>
               <div className="flex gap-2 flex-wrap">
-                {SKIN_COLORS.map((c) => (
+                {skinPalette.map((c) => (
                   <button key={c} type="button" onClick={() => setSkinColor(c)}
                     style={{
                       background: c,
@@ -130,36 +160,19 @@ export default function CreateCharacter() {
               </div>
             </div>
 
+            {/* Hair color */}
             <div>
               <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Color de Pelo</label>
               <div className="flex gap-2 flex-wrap">
-                {HAIR_COLORS.map((c) => (
+                {hairPalette.map((c) => (
                   <button key={c} type="button" onClick={() => setHairColor(c)}
                     style={{
                       background: c,
                       boxShadow: hairColor === c
-                        ? `0 0 14px ${c === '#ffffff' ? '#aaa' : c}, 0 0 0 2px rgba(245,158,11,0.8)`
+                        ? `0 0 14px ${c === '#fff9ae' || c === '#fff2df' || c === '#ffaa1e' ? '#aaa' : c}, 0 0 0 2px rgba(245,158,11,0.8)`
                         : '0 0 0 2px rgba(255,255,255,0.12)',
                     }}
                     className={`w-9 h-9 rounded-full transition-all ${hairColor === c ? 'scale-110' : 'hover:scale-105'}`} />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Peinado</label>
-              <div className="flex gap-2">
-                {HAIR_STYLES.map((s) => (
-                  <button key={s.id} type="button" onClick={() => setHairStyle(s.id)}
-                    className="flex-1 py-2 flex flex-col items-center gap-0.5 rounded-lg text-xs font-bold transition-all"
-                    style={{
-                      background: hairStyle === s.id ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.3)',
-                      border: `1px solid ${hairStyle === s.id ? 'rgba(245,158,11,0.6)' : 'rgba(255,255,255,0.08)'}`,
-                      color: hairStyle === s.id ? '#f59e0b' : '#6b7280',
-                    }}>
-                    <span className="text-lg">{s.icon}</span>
-                    <span>{s.label}</span>
-                  </button>
                 ))}
               </div>
             </div>
