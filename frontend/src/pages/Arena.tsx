@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Phaser from 'phaser';
 import { CombatScene } from '../game/CombatScene';
 import type { CombatSceneConfig } from '../game/CombatScene';
+import { characterSVG } from '../sprites/characters';
+import { WEAPON_SVGS } from '../sprites/weapons';
+import { PET_SVGS } from '../sprites/pets';
 import api from '../api/client';
 
 interface CombatData {
@@ -22,26 +25,89 @@ interface CombatData {
   level_up: { type: string; label: string } | null;
 }
 
-function buildGame(container: HTMLDivElement, combatData: CombatData, onComplete: (id: string) => void): Phaser.Game {
+function loadSvgAsImg(svg: string): Promise<HTMLImageElement> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(img); // resolve anyway, create() checks naturalWidth
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  });
+}
+
+async function preloadSprites(combatData: CombatData): Promise<CombatSceneConfig['attackerConfig'] & { def: CombatSceneConfig['defenderConfig'] }> {
+  const atkSvg = characterSVG(
+    combatData.attacker_appearance?.skin_color ?? '#FDBCB4',
+    combatData.attacker_appearance?.hair_color ?? '#000000',
+    combatData.attacker_rank ?? 'Bruto',
+  );
+  const defSvg = characterSVG(
+    combatData.defender_appearance?.skin_color ?? '#FDBCB4',
+    combatData.defender_appearance?.hair_color ?? '#000000',
+    combatData.defender_rank ?? 'Bruto',
+  );
+
+  const loads: Promise<HTMLImageElement | undefined>[] = [
+    loadSvgAsImg(atkSvg),
+    loadSvgAsImg(defSvg),
+  ];
+
+  const atkWpn = combatData.attacker_weapon_type && WEAPON_SVGS[combatData.attacker_weapon_type];
+  const defWpn = combatData.defender_weapon_type && WEAPON_SVGS[combatData.defender_weapon_type];
+  const atkPet = combatData.attacker_pet_type && PET_SVGS[combatData.attacker_pet_type];
+  const defPet = combatData.defender_pet_type && PET_SVGS[combatData.defender_pet_type];
+
+  if (atkWpn) loads.push(loadSvgAsImg(atkWpn)); else loads.push(Promise.resolve(undefined));
+  if (defWpn) loads.push(loadSvgAsImg(defWpn)); else loads.push(Promise.resolve(undefined));
+  if (atkPet) loads.push(loadSvgAsImg(atkPet)); else loads.push(Promise.resolve(undefined));
+  if (defPet) loads.push(loadSvgAsImg(defPet)); else loads.push(Promise.resolve(undefined));
+
+  const [atkImg, defImg, atkWpnImg, defWpnImg, atkPetImg, defPetImg] = await Promise.all(loads);
+
+  return {
+    skinColor: combatData.attacker_appearance?.skin_color ?? '#FDBCB4',
+    hairColor: combatData.attacker_appearance?.hair_color ?? '#000000',
+    rank: combatData.attacker_rank ?? 'Bruto',
+    weaponType: combatData.attacker_weapon_type ?? null,
+    petType: combatData.attacker_pet_type ?? null,
+    imgEl: atkImg as HTMLImageElement,
+    weaponImgEl: atkWpnImg as HTMLImageElement | undefined,
+    petImgEl: atkPetImg as HTMLImageElement | undefined,
+    def: {
+      skinColor: combatData.defender_appearance?.skin_color ?? '#FDBCB4',
+      hairColor: combatData.defender_appearance?.hair_color ?? '#000000',
+      rank: combatData.defender_rank ?? 'Bruto',
+      weaponType: combatData.defender_weapon_type ?? null,
+      petType: combatData.defender_pet_type ?? null,
+      imgEl: defImg as HTMLImageElement,
+      weaponImgEl: defWpnImg as HTMLImageElement | undefined,
+      petImgEl: defPetImg as HTMLImageElement | undefined,
+    },
+  };
+}
+
+async function buildGame(
+  container: HTMLDivElement,
+  combatData: CombatData,
+  onComplete: (id: string) => void,
+): Promise<Phaser.Game> {
+  const sprites = await preloadSprites(combatData);
+
   const cfg: CombatSceneConfig = {
     logData: combatData.log_data,
     attackerName: combatData.attacker_name,
     defenderName: combatData.defender_name,
     winnerId: combatData.winner_id,
     attackerConfig: {
-      skinColor: combatData.attacker_appearance?.skin_color ?? '#FDBCB4',
-      hairColor: combatData.attacker_appearance?.hair_color ?? '#000000',
-      rank: combatData.attacker_rank ?? 'Bruto',
-      weaponType: combatData.attacker_weapon_type ?? null,
-      petType: combatData.attacker_pet_type ?? null,
+      skinColor: sprites.skinColor,
+      hairColor: sprites.hairColor,
+      rank: sprites.rank,
+      weaponType: sprites.weaponType,
+      petType: sprites.petType,
+      imgEl: sprites.imgEl,
+      weaponImgEl: sprites.weaponImgEl,
+      petImgEl: sprites.petImgEl,
     },
-    defenderConfig: {
-      skinColor: combatData.defender_appearance?.skin_color ?? '#FDBCB4',
-      hairColor: combatData.defender_appearance?.hair_color ?? '#000000',
-      rank: combatData.defender_rank ?? 'Bruto',
-      weaponType: combatData.defender_weapon_type ?? null,
-      petType: combatData.defender_pet_type ?? null,
-    },
+    defenderConfig: sprites.def,
     onComplete,
   };
 
@@ -49,7 +115,7 @@ function buildGame(container: HTMLDivElement, combatData: CombatData, onComplete
     type: Phaser.AUTO,
     width: 640, height: 360,
     parent: container,
-    backgroundColor: '#1a0e00',
+    backgroundColor: '#120900',
     scene: [],
   });
   game.scene.add('CombatScene', CombatScene, false);
@@ -72,12 +138,21 @@ export default function Arena() {
 
   useEffect(() => {
     if (!combatData || !containerRef.current || gameRef.current) return;
-    gameRef.current = buildGame(containerRef.current, combatData, (_winnerId) => {
+    let cancelled = false;
+    buildGame(containerRef.current, combatData, (_winnerId) => {
+      if (cancelled) return;
       setDone({ winnerName: combatData.winner_name, levelUp: combatData.level_up });
       gameRef.current?.destroy(true);
       gameRef.current = null;
+    }).then((game) => {
+      if (cancelled) { game.destroy(true); return; }
+      gameRef.current = game;
     });
-    return () => { gameRef.current?.destroy(true); gameRef.current = null; };
+    return () => {
+      cancelled = true;
+      gameRef.current?.destroy(true);
+      gameRef.current = null;
+    };
   }, [combatData]);
 
   return (
@@ -100,6 +175,10 @@ export default function Arena() {
               <span className="text-red-600 text-2xl">VS</span>
               <span className="text-amber-300">{combatData.defender_name}</span>
             </div>
+          )}
+
+          {!combatData && (
+            <p className="text-amber-700 text-sm animate-pulse">Cargando combate...</p>
           )}
 
           <div ref={containerRef}
@@ -135,14 +214,24 @@ export default function Arena() {
             </div>
           )}
 
-          <button onClick={() => navigate('/profile')}
-            className="w-full py-4 font-black text-stone-900 rounded-xl transition-all hover:opacity-90 active:scale-95 text-lg"
-            style={{
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              boxShadow: '0 4px 24px rgba(245,158,11,0.35)',
-            }}>
-            Volver a mi perfil
-          </button>
+          <div className="flex gap-3">
+            <button onClick={() => navigate('/ranking')}
+              className="flex-1 py-4 font-black text-white rounded-xl transition-all hover:opacity-90 active:scale-95 text-sm"
+              style={{
+                background: 'linear-gradient(135deg, #991b1b, #7f1d1d)',
+                boxShadow: '0 4px 16px rgba(153,27,27,0.4)',
+              }}>
+              ⚔ Más rivales
+            </button>
+            <button onClick={() => navigate('/profile')}
+              className="flex-1 py-4 font-black text-stone-900 rounded-xl transition-all hover:opacity-90 active:scale-95 text-sm"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                boxShadow: '0 4px 16px rgba(245,158,11,0.3)',
+              }}>
+              Mi perfil
+            </button>
+          </div>
         </div>
       )}
     </div>

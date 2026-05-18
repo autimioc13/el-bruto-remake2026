@@ -1,110 +1,164 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import CharacterSprite from '../components/CharacterSprite';
 
-const HAIR_COLORS = ['#000000', '#8B4513', '#FFD700', '#FF4500', '#808080'];
-const SKIN_COLORS = ['#FDBCB4', '#D4956A', '#8D5524', '#4A2912'];
-const HAIR_STYLES = ['short', 'long', 'mohawk', 'bald'];
+const SKIN_COLORS = ['#FDBCB4', '#F5CBA7', '#D4956A', '#C68642', '#8D5524', '#4A2912'];
+const HAIR_COLORS = [
+  '#1a0a00', '#3d2005', '#8B4513', '#c8851c', '#FFD700',
+  '#FF4500', '#dc143c', '#4B0082', '#808080', '#ffffff',
+];
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 export default function CreateCharacter() {
   const [name, setName] = useState('');
-  const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [hairColor, setHairColor] = useState(HAIR_COLORS[0]);
   const [skinColor, setSkinColor] = useState(SKIN_COLORS[0]);
-  const [hairStyle, setHairStyle] = useState(HAIR_STYLES[0]);
+  const [hairColor, setHairColor] = useState(HAIR_COLORS[0]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const randomize = () => {
+    setSkinColor(pick(SKIN_COLORS));
+    setHairColor(pick(HAIR_COLORS));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       await api.post('/characters', {
-        name, gender,
+        name,
+        gender: 'male',
         hair_color: hairColor,
         skin_color: skinColor,
-        hair_style: hairStyle,
+        hair_style: 'short',
       });
       navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al crear personaje');
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-amber-50 flex items-center justify-center">
-      <div className="bg-amber-100 border-4 border-amber-800 rounded-lg p-8 w-[480px] shadow-xl">
-        <h2 className="text-3xl font-bold text-center text-amber-900 mb-6">Crea tu Bruto</h2>
+    <div className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: 'linear-gradient(135deg, #0a0800 0%, #1a0e00 40%, #2a0a08 100%)' }}>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-amber-800 font-bold mb-1">Nombre</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={50}
-              className="w-full p-2 border-2 border-amber-700 rounded bg-amber-50"
-              required
-            />
-          </div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #f59e0b, transparent)' }} />
+        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 rounded-full opacity-8 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #dc2626, transparent)' }} />
+      </div>
 
-          <div>
-            <label className="block text-amber-800 font-bold mb-1">Género</label>
-            <div className="flex gap-2">
-              {(['male', 'female'] as const).map((g) => (
-                <button key={g} type="button" onClick={() => setGender(g)}
-                  className={`flex-1 py-2 font-bold rounded ${gender === g ? 'bg-amber-800 text-white' : 'bg-amber-200 text-amber-800'}`}>
-                  {g === 'male' ? 'Masculino' : 'Femenino'}
-                </button>
-              ))}
+      <div className="w-full max-w-sm relative z-10">
+        <div className="text-center mb-6">
+          <p className="text-amber-700 text-xs font-bold tracking-[0.3em] uppercase mb-2">⚔ Arena de Combate ⚔</p>
+          <h1 className="text-4xl font-black text-amber-400"
+            style={{ textShadow: '0 0 30px rgba(245,158,11,0.4)' }}>
+            Crea tu Bruto
+          </h1>
+        </div>
+
+        <div className="rounded-2xl p-6"
+          style={{
+            background: 'rgba(20,14,4,0.97)',
+            border: '1px solid rgba(180,130,20,0.25)',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(245,158,11,0.06)',
+          }}>
+
+          {/* Live preview */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="rounded-xl p-5 flex items-center justify-center mb-3"
+              style={{
+                background: 'rgba(0,0,0,0.45)',
+                border: '2px solid rgba(180,130,20,0.35)',
+                minWidth: 110,
+                boxShadow: 'inset 0 0 30px rgba(0,0,0,0.6)',
+              }}>
+              <CharacterSprite skinColor={skinColor} hairColor={hairColor} rank="Bruto" size={84} />
             </div>
+            <button type="button" onClick={randomize}
+              className="px-5 py-2 text-sm font-black rounded-lg transition-all hover:opacity-90 active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
+                color: 'white',
+                boxShadow: '0 4px 16px rgba(124,58,237,0.4)',
+              }}>
+              🎲 Aspecto Aleatorio
+            </button>
           </div>
 
-          <div>
-            <label className="block text-amber-800 font-bold mb-1">Color de pelo</label>
-            <div className="flex gap-2">
-              {HAIR_COLORS.map((c) => (
-                <button key={c} type="button" onClick={() => setHairColor(c)}
-                  style={{ background: c }}
-                  className={`w-10 h-10 rounded-full border-4 ${hairColor === c ? 'border-amber-900' : 'border-transparent'}`} />
-              ))}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Nombre del Bruto</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={50}
+                placeholder="Ponle un nombre feroz..."
+                className="w-full p-3 rounded-lg text-stone-100 text-sm outline-none transition-all placeholder:text-stone-600"
+                style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(180,130,20,0.3)' }}
+                required
+              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-amber-800 font-bold mb-1">Color de piel</label>
-            <div className="flex gap-2">
-              {SKIN_COLORS.map((c) => (
-                <button key={c} type="button" onClick={() => setSkinColor(c)}
-                  style={{ background: c }}
-                  className={`w-10 h-10 rounded-full border-4 ${skinColor === c ? 'border-amber-900' : 'border-transparent'}`} />
-              ))}
+            <div>
+              <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Color de Piel</label>
+              <div className="flex gap-2 flex-wrap">
+                {SKIN_COLORS.map((c) => (
+                  <button key={c} type="button" onClick={() => setSkinColor(c)}
+                    style={{
+                      background: c,
+                      boxShadow: skinColor === c ? `0 0 14px ${c}, 0 0 0 2px rgba(245,158,11,0.8)` : '0 0 0 2px rgba(255,255,255,0.1)',
+                    }}
+                    className={`w-9 h-9 rounded-full transition-all ${skinColor === c ? 'scale-110' : 'hover:scale-105'}`} />
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-amber-800 font-bold mb-1">Peinado</label>
-            <div className="flex gap-2 flex-wrap">
-              {HAIR_STYLES.map((s) => (
-                <button key={s} type="button" onClick={() => setHairStyle(s)}
-                  className={`px-3 py-1 font-bold rounded capitalize ${hairStyle === s ? 'bg-amber-800 text-white' : 'bg-amber-200 text-amber-800'}`}>
-                  {s}
-                </button>
-              ))}
+            <div>
+              <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Color de Pelo</label>
+              <div className="flex gap-2 flex-wrap">
+                {HAIR_COLORS.map((c) => (
+                  <button key={c} type="button" onClick={() => setHairColor(c)}
+                    style={{
+                      background: c,
+                      boxShadow: hairColor === c
+                        ? `0 0 14px ${c === '#ffffff' ? '#aaa' : c}, 0 0 0 2px rgba(245,158,11,0.8)`
+                        : '0 0 0 2px rgba(255,255,255,0.12)',
+                    }}
+                    className={`w-9 h-9 rounded-full transition-all ${hairColor === c ? 'scale-110' : 'hover:scale-105'}`} />
+                ))}
+              </div>
             </div>
-          </div>
 
-          <p className="text-amber-700 text-sm italic">
-            * Tus stats iniciales serán asignados aleatoriamente ¡como en el original!
-          </p>
+            <p className="text-stone-600 text-xs italic text-center">
+              ✨ Tus stats iniciales serán una sorpresa — ¡como en el original!
+            </p>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+            {error && (
+              <div className="text-sm rounded-lg p-3"
+                style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)', color: '#fca5a5' }}>
+                {error}
+              </div>
+            )}
 
-          <button type="submit"
-            className="w-full py-3 bg-amber-800 text-white font-bold rounded hover:bg-amber-900 text-lg">
-            ¡Crear mi Bruto!
-          </button>
-        </form>
+            <button type="submit" disabled={loading}
+              className="w-full py-4 font-black text-stone-900 rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-60 text-lg"
+              style={{
+                background: loading ? '#78350f' : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                boxShadow: '0 4px 24px rgba(245,158,11,0.35)',
+              }}>
+              {loading ? '...' : '⚔ ¡CREAR MI BRUTO!'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
