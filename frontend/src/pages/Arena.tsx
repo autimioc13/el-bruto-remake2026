@@ -6,6 +6,7 @@ import type { CombatSceneConfig } from '../game/CombatScene';
 import { characterSVG } from '../sprites/characters';
 import { WEAPON_SVGS } from '../sprites/weapons';
 import { PET_SVGS } from '../sprites/pets';
+import { renderBrute } from '../components/BruteRenderer';
 import api from '../api/client';
 
 interface CombatData {
@@ -14,8 +15,8 @@ interface CombatData {
   winner_name: string;
   attacker_name: string;
   defender_name: string;
-  attacker_appearance?: { skin_color: string; hair_color: string };
-  defender_appearance?: { skin_color: string; hair_color: string };
+  attacker_appearance?: { skin_color: string; hair_color: string; hair_style?: string; gender?: 'male'|'female'; body?: string; colors?: string };
+  defender_appearance?: { skin_color: string; hair_color: string; hair_style?: string; gender?: 'male'|'female'; body?: string; colors?: string };
   attacker_weapon_type?: string | null;
   defender_weapon_type?: string | null;
   attacker_pet_type?: string | null;
@@ -29,29 +30,40 @@ function loadSvgAsImg(svg: string): Promise<HTMLImageElement> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => resolve(img); // resolve anyway, create() checks naturalWidth
+    img.onerror = () => resolve(img);
     img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   });
 }
 
-async function preloadSprites(combatData: CombatData): Promise<CombatSceneConfig['attackerConfig'] & { def: CombatSceneConfig['defenderConfig'] }> {
-  const atkSvg = characterSVG(
-    combatData.attacker_appearance?.skin_color ?? '#FDBCB4',
-    combatData.attacker_appearance?.hair_color ?? '#000000',
-    combatData.attacker_rank ?? 'Bruto',
-    (combatData.attacker_appearance as any)?.hair_style ?? 'short',
-  );
-  const defSvg = characterSVG(
-    combatData.defender_appearance?.skin_color ?? '#FDBCB4',
-    combatData.defender_appearance?.hair_color ?? '#000000',
-    combatData.defender_rank ?? 'Bruto',
-    (combatData.defender_appearance as any)?.hair_style ?? 'short',
-  );
+async function bruteToImg(gender: 'male'|'female', body: string, colors: string): Promise<HTMLImageElement> {
+  try {
+    const src = await renderBrute(gender, body, colors);
+    if (!src) throw new Error('empty');
+    return await new Promise<HTMLImageElement>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(new Image());
+      img.src = src;
+    });
+  } catch {
+    return new Image();
+  }
+}
 
-  const loads: Promise<HTMLImageElement | undefined>[] = [
-    loadSvgAsImg(atkSvg),
-    loadSvgAsImg(defSvg),
-  ];
+async function preloadSprites(combatData: CombatData): Promise<CombatSceneConfig['attackerConfig'] & { def: CombatSceneConfig['defenderConfig'] }> {
+  const atkApp = combatData.attacker_appearance;
+  const defApp = combatData.defender_appearance;
+
+  // Use authentic Flash-asset render when body/colors present, else fall back to SVG sprite
+  const atkImgLoad: Promise<HTMLImageElement> = (atkApp?.body && atkApp?.colors)
+    ? bruteToImg(atkApp.gender ?? 'male', atkApp.body, atkApp.colors)
+    : loadSvgAsImg(characterSVG(atkApp?.skin_color ?? '#FDBCB4', atkApp?.hair_color ?? '#000000', combatData.attacker_rank ?? 'Bruto', atkApp?.hair_style ?? 'short'));
+
+  const defImgLoad: Promise<HTMLImageElement> = (defApp?.body && defApp?.colors)
+    ? bruteToImg(defApp.gender ?? 'male', defApp.body, defApp.colors)
+    : loadSvgAsImg(characterSVG(defApp?.skin_color ?? '#FDBCB4', defApp?.hair_color ?? '#000000', combatData.defender_rank ?? 'Bruto', defApp?.hair_style ?? 'short'));
+
+  const loads: Promise<HTMLImageElement | undefined>[] = [atkImgLoad, defImgLoad];
 
   const atkWpn = combatData.attacker_weapon_type && WEAPON_SVGS[combatData.attacker_weapon_type];
   const defWpn = combatData.defender_weapon_type && WEAPON_SVGS[combatData.defender_weapon_type];
@@ -64,9 +76,6 @@ async function preloadSprites(combatData: CombatData): Promise<CombatSceneConfig
   if (defPet) loads.push(loadSvgAsImg(defPet)); else loads.push(Promise.resolve(undefined));
 
   const [atkImg, defImg, atkWpnImg, defWpnImg, atkPetImg, defPetImg] = await Promise.all(loads);
-
-  const atkApp = combatData.attacker_appearance as any;
-  const defApp = combatData.defender_appearance as any;
 
   return {
     skinColor: atkApp?.skin_color ?? '#FDBCB4',

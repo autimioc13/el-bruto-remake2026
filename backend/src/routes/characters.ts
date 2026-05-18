@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { supabase } from '../db/supabase';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { Stats, Appearance } from '../types';
+import { ensureBodyColors } from '../utils/brute';
 
 const router = Router();
 
@@ -15,7 +16,17 @@ function randomStats(): Stats {
   };
 }
 
+async function upgradeAppearance(char: any) {
+  const patch = ensureBodyColors(char.appearance);
+  if (!patch) return;
+  const newAppearance = { ...char.appearance, ...patch };
+  char.appearance = newAppearance;
+  // fire-and-forget: persist so next request is already upgraded
+  supabase.from('characters').update({ appearance: newAppearance }).eq('id', char.id).then(() => {});
+}
+
 async function enrichCharacter(char: any) {
+  await upgradeAppearance(char);
   const { data: weaponRow } = await supabase
     .from('character_weapons')
     .select('equipped, weapons(*)')

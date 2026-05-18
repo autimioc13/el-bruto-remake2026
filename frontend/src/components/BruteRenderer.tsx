@@ -77,7 +77,7 @@ async function processQueue() {
   }
 }
 
-function renderBrute(gender: Props['gender'], body: string, colors: string): Promise<string> {
+export function renderBrute(gender: Props['gender'], body: string, colors: string): Promise<string> {
   return new Promise(resolve => {
     renderQueue.push({ gender, body, colors, resolve });
     processQueue();

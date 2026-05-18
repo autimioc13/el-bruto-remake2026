@@ -4,6 +4,7 @@ import { requireAuth, AuthRequest } from '../middleware/auth';
 import { simulateCombat } from '../engine/combat';
 import { calculateXpGain, shouldLevelUp, applyStatIncrease, determineRewardType, getRankName } from '../engine/levelup';
 import { Fighter, Skill, Weapon, Pet } from '../types';
+import { ensureBodyColors } from '../utils/brute';
 
 const router = Router();
 
@@ -263,6 +264,22 @@ router.get('/:id', async (req, res: Response) => {
 
   const atkWeapon = atk?.character_weapons?.find((w: any) => w.equipped)?.weapons;
   const defWeapon = def?.character_weapons?.find((w: any) => w.equipped)?.weapons;
+
+  // Auto-generate body/colors for old characters and persist asynchronously
+  if (atk?.appearance) {
+    const patch = ensureBodyColors(atk.appearance);
+    if (patch) {
+      atk.appearance = { ...atk.appearance, ...patch };
+      supabase.from('characters').update({ appearance: atk.appearance }).eq('id', data.attacker_id).then(() => {});
+    }
+  }
+  if (def?.appearance) {
+    const patch = ensureBodyColors(def.appearance);
+    if (patch) {
+      def.appearance = { ...def.appearance, ...patch };
+      supabase.from('characters').update({ appearance: def.appearance }).eq('id', data.defender_id).then(() => {});
+    }
+  }
 
   const winner_name = data.winner_id === data.attacker_id ? data.attacker_name : data.defender_name;
 
