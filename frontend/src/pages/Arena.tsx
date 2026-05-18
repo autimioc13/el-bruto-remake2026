@@ -49,7 +49,7 @@ function buildGame(container: HTMLDivElement, combatData: CombatData, onComplete
     type: Phaser.AUTO,
     width: 640, height: 360,
     parent: container,
-    backgroundColor: '#d4a017',
+    backgroundColor: '#1a0e00',
     scene: [],
   });
   game.scene.add('CombatScene', CombatScene, false);
@@ -81,23 +81,66 @@ export default function Arena() {
   }, [combatData]);
 
   return (
-    <div className="min-h-screen bg-amber-900 flex flex-col items-center justify-center gap-6">
-      <h1 className="text-3xl font-bold text-amber-200">¡COMBATE!</h1>
-      {!done && combatData && (
-        <div className="flex gap-8 text-amber-200 text-lg font-bold mb-2">
-          <span>{combatData.attacker_name}</span><span>VS</span><span>{combatData.defender_name}</span>
-        </div>
-      )}
-      {!done && <div ref={containerRef} className="border-4 border-amber-600 rounded shadow-2xl" />}
-      {done && (
-        <div className="bg-amber-100 border-4 border-amber-800 rounded-lg p-10 text-center shadow-2xl">
-          <h2 className="text-4xl font-bold text-amber-900 mb-2">¡Combate terminado!</h2>
-          <p className="text-amber-700 mb-4">Ganador: <span className="font-bold">{done.winnerName}</span></p>
-          {done.levelUp && (
-            <p className="text-green-700 font-bold text-lg mb-4">¡Subiste de nivel! {done.levelUp.label}</p>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-4"
+      style={{ background: 'linear-gradient(180deg, #0a0800 0%, #1a0600 100%)' }}>
+
+      {!done && (
+        <>
+          <div className="text-center">
+            <p className="text-amber-700 text-xs font-bold tracking-widest uppercase mb-2">⚔ Arena de Combate ⚔</p>
+            <h1 className="font-black text-5xl"
+              style={{ color: '#f59e0b', textShadow: '0 0 30px rgba(245,158,11,0.5)' }}>
+              COMBATE
+            </h1>
+          </div>
+
+          {combatData && (
+            <div className="flex items-center gap-6 text-lg font-black">
+              <span className="text-amber-300">{combatData.attacker_name}</span>
+              <span className="text-red-600 text-2xl">VS</span>
+              <span className="text-amber-300">{combatData.defender_name}</span>
+            </div>
           )}
+
+          <div ref={containerRef}
+            className="rounded-xl overflow-hidden"
+            style={{ boxShadow: '0 0 60px rgba(245,158,11,0.2), 0 0 0 2px rgba(180,130,20,0.3)' }} />
+        </>
+      )}
+
+      {done && (
+        <div className="w-full max-w-md rounded-2xl p-8 text-center"
+          style={{
+            background: 'rgba(20,14,4,0.98)',
+            border: '1px solid rgba(180,130,20,0.3)',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.8)',
+          }}>
+          <p className="text-amber-700 text-xs font-bold tracking-widest uppercase mb-4">Resultado</p>
+          <h2 className="font-black text-4xl mb-2"
+            style={{ color: '#f59e0b', textShadow: '0 0 20px rgba(245,158,11,0.4)' }}>
+            ¡COMBATE TERMINADO!
+          </h2>
+
+          <div className="my-6 py-4 rounded-xl"
+            style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <p className="text-stone-500 text-sm mb-1">Ganador</p>
+            <p className="text-2xl font-black text-amber-400">{done.winnerName}</p>
+          </div>
+
+          {done.levelUp && (
+            <div className="mb-6 p-3 rounded-xl"
+              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
+              <p className="text-green-400 font-bold text-sm">🎉 ¡Subiste de nivel!</p>
+              <p className="text-green-300 font-black">{done.levelUp.label}</p>
+            </div>
+          )}
+
           <button onClick={() => navigate('/profile')}
-            className="px-8 py-3 bg-amber-800 text-white font-bold rounded hover:bg-amber-900 text-lg">
+            className="w-full py-4 font-black text-stone-900 rounded-xl transition-all hover:opacity-90 active:scale-95 text-lg"
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              boxShadow: '0 4px 24px rgba(245,158,11,0.35)',
+            }}>
             Volver a mi perfil
           </button>
         </div>

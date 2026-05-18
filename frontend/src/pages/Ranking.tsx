@@ -15,10 +15,16 @@ interface RankingEntry {
   clan?: { name: string } | null;
 }
 
+const POSITION_STYLE: Record<number, { color: string; glow: string }> = {
+  0: { color: '#f59e0b', glow: 'rgba(245,158,11,0.3)' },
+  1: { color: '#9ca3af', glow: 'rgba(156,163,175,0.2)' },
+  2: { color: '#b45309', glow: 'rgba(180,83,9,0.2)' },
+};
+
 export default function Ranking() {
   const [characters, setCharacters] = useState<RankingEntry[]>([]);
   const [myId, setMyId] = useState<string | null>(null);
-  const [challenging, setChallengingId] = useState<string | null>(null);
+  const [challengingId, setChallengingId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,59 +44,88 @@ export default function Ranking() {
   };
 
   return (
-    <div className="min-h-screen bg-amber-50 p-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-2">
-          <h1 className="text-3xl font-bold text-amber-900">⚔ Rivales</h1>
-          <button onClick={() => navigate('/profile')}
-            className="px-4 py-2 bg-amber-700 text-white rounded font-bold text-sm">
-            Mi Bruto
-          </button>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #0a0800 0%, #120e02 100%)' }}>
+
+      {/* Header */}
+      <div className="sticky top-0 z-10 px-4 py-3 flex justify-between items-center"
+        style={{ background: 'rgba(10,8,0,0.95)', borderBottom: '1px solid rgba(180,130,20,0.2)', backdropFilter: 'blur(10px)' }}>
+        <div>
+          <h1 className="text-xl font-black text-amber-400">⚔ Rivales</h1>
+          <p className="text-stone-600 text-xs">Elige un rival y ¡a combatir!</p>
         </div>
-        <p className="text-amber-700 text-sm mb-5">Elige un rival y ¡a combatir!</p>
+        <button onClick={() => navigate('/profile')}
+          className="px-4 py-2 text-sm font-bold rounded-lg text-amber-400 transition-all hover:text-amber-300"
+          style={{ background: 'rgba(180,130,20,0.15)', border: '1px solid rgba(180,130,20,0.2)' }}>
+          Mi Bruto
+        </button>
+      </div>
+
+      <div className="max-w-2xl mx-auto p-4 space-y-2">
 
         {characters.length === 0 && (
-          <div className="bg-amber-100 border-2 border-amber-400 rounded-lg p-8 text-center text-amber-700">
-            Aún no hay más Brutos registrados. ¡Invita a alguien!
+          <div className="text-center py-16">
+            <p className="text-4xl mb-4">⚔</p>
+            <p className="text-stone-500 font-bold">Aún no hay más Brutos.</p>
+            <p className="text-stone-600 text-sm">¡Invita a alguien a combatir!</p>
           </div>
         )}
 
-        <div className="space-y-2">
-          {characters.map((char, i) => {
-            const isMe = char.id === myId;
-            return (
-              <div key={char.id}
-                className={`bg-amber-100 border-2 rounded-lg p-3 flex items-center gap-3 transition-colors ${isMe ? 'border-amber-400 opacity-60' : 'border-amber-700 hover:bg-amber-200'}`}>
-                <span className="text-lg font-bold text-amber-800 w-7">#{i + 1}</span>
-                <div className="cursor-pointer" onClick={() => navigate(`/profile/${char.id}`)}>
-                  <CharacterSprite
-                    skinColor={char.appearance.skin_color}
-                    hairColor={char.appearance.hair_color}
-                    rank={char.rank ?? 'Bruto'}
-                    size={36}
-                  />
-                </div>
-                <div className="flex-1 cursor-pointer" onClick={() => navigate(`/profile/${char.id}`)}>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-bold text-amber-900">{char.name}</p>
-                    {char.rank && <RankBadge rank={char.rank} />}
-                    {char.clan && <span className="text-xs text-amber-600 font-bold">[{char.clan.name}]</span>}
-                    {isMe && <span className="text-xs text-amber-500 italic">(tú)</span>}
-                  </div>
-                  <p className="text-sm text-amber-700">Nv {char.level} · {char.wins}V {char.losses}D</p>
-                </div>
-                {!isMe && (
-                  <button
-                    onClick={() => handleChallenge(char.id)}
-                    disabled={challenging === char.id}
-                    className="px-4 py-2 bg-red-700 text-white font-bold rounded hover:bg-red-800 text-sm disabled:opacity-50 transition-colors whitespace-nowrap">
-                    {challenging === char.id ? '...' : '⚔ RETAR'}
-                  </button>
-                )}
+        {characters.map((char, i) => {
+          const isMe = char.id === myId;
+          const pos = POSITION_STYLE[i];
+          return (
+            <div key={char.id}
+              className="flex items-center gap-3 rounded-xl p-3 transition-all"
+              style={{
+                background: isMe ? 'rgba(180,130,20,0.08)' : 'rgba(28,20,4,0.9)',
+                border: `1px solid ${pos ? pos.color + '40' : isMe ? 'rgba(180,130,20,0.3)' : 'rgba(255,255,255,0.05)'}`,
+                boxShadow: pos ? `0 0 20px ${pos.glow}` : 'none',
+              }}>
+
+              {/* Position */}
+              <div className="w-8 text-center flex-shrink-0">
+                {i === 0 ? <span className="text-xl">🥇</span>
+                  : i === 1 ? <span className="text-xl">🥈</span>
+                  : i === 2 ? <span className="text-xl">🥉</span>
+                  : <span className="font-black text-stone-600 text-sm">#{i + 1}</span>}
               </div>
-            );
-          })}
-        </div>
+
+              {/* Sprite */}
+              <div className="cursor-pointer flex-shrink-0" onClick={() => navigate(`/profile/${char.id}`)}>
+                <CharacterSprite
+                  skinColor={char.appearance.skin_color}
+                  hairColor={char.appearance.hair_color}
+                  rank={char.rank ?? 'Bruto'}
+                  size={38}
+                />
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/profile/${char.id}`)}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-black text-stone-100">{char.name}</span>
+                  {char.rank && <RankBadge rank={char.rank} />}
+                  {char.clan && <span className="text-xs text-amber-700 font-bold">[{char.clan.name}]</span>}
+                  {isMe && <span className="text-xs text-amber-800 italic">(tú)</span>}
+                </div>
+                <p className="text-xs text-stone-500 mt-0.5">Nv {char.level} · {char.wins}V {char.losses}D</p>
+              </div>
+
+              {/* Challenge */}
+              {!isMe && (
+                <button onClick={() => handleChallenge(char.id)}
+                  disabled={challengingId === char.id}
+                  className="flex-shrink-0 px-4 py-2 font-black text-sm rounded-lg text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-40"
+                  style={{
+                    background: challengingId === char.id ? '#7f1d1d' : 'linear-gradient(135deg,#991b1b,#7f1d1d)',
+                    boxShadow: '0 4px 16px rgba(153,27,27,0.4)',
+                  }}>
+                  {challengingId === char.id ? '...' : '⚔ RETAR'}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
