@@ -307,7 +307,6 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private applyHp(ev: CombatEvent) {
-    const BAR = 148;
     if (ev.defender_hp !== undefined) {
       this.defHp = ev.defender_hp;
       const p = Math.max(0, this.defHp / this.defMaxHp);

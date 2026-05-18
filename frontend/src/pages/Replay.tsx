@@ -29,6 +29,7 @@ export default function Replay() {
       attackerName: combatData.attacker_name,
       defenderName: combatData.defender_name,
       winnerId: combatData.winner_id,
+      winnerName: combatData.winner_name ?? '',
       attackerConfig: {
         skinColor: combatData.attacker_appearance?.skin_color ?? '#FDBCB4',
         hairColor: combatData.attacker_appearance?.hair_color ?? '#000000',

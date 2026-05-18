@@ -96,7 +96,7 @@ export class BruteDisplay {
     this.#loadSvgs(svgsToLoad);
 
     if (this.#looking === 'right') this.container.scale.x = -1;
-    this.container.filters = [new OutlineFilter(2, 0x000000)];
+    this.container.filters = [new OutlineFilter(2, 0x000000) as unknown as PIXIType.Filter];
 
     this.#usedSvgs = {};
     this.#displayFrame(activeC, symbol);
