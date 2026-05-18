@@ -51,7 +51,7 @@ export default function Ranking() {
       <div className="sticky top-0 z-10 px-4 py-3 flex justify-between items-center"
         style={{ background: 'rgba(10,8,0,0.95)', borderBottom: '1px solid rgba(180,130,20,0.2)', backdropFilter: 'blur(10px)' }}>
         <div>
-          <h1 className="text-xl font-black text-amber-400">⚔ Rivales</h1>
+          <h1 className="text-xl font-black text-amber-400">Rivales</h1>
           <p className="text-stone-600 text-xs">Elige un rival y ¡a combatir!</p>
         </div>
         <button onClick={() => navigate('/profile')}
@@ -65,7 +65,6 @@ export default function Ranking() {
 
         {characters.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-4xl mb-4">⚔</p>
             <p className="text-stone-500 font-bold">Aún no hay más Brutos.</p>
             <p className="text-stone-600 text-sm">¡Invita a alguien a combatir!</p>
           </div>
@@ -85,10 +84,10 @@ export default function Ranking() {
 
               {/* Position */}
               <div className="w-8 text-center flex-shrink-0">
-                {i === 0 ? <span className="text-xl">🥇</span>
-                  : i === 1 ? <span className="text-xl">🥈</span>
-                  : i === 2 ? <span className="text-xl">🥉</span>
-                  : <span className="font-black text-stone-600 text-sm">#{i + 1}</span>}
+                <span className="font-black text-sm"
+                  style={{ color: pos?.color ?? '#4b5563' }}>
+                  #{i + 1}
+                </span>
               </div>
 
               {/* Sprite */}
@@ -131,8 +130,9 @@ export default function Ranking() {
                   style={{
                     background: challengingId === char.id ? '#7f1d1d' : 'linear-gradient(135deg,#991b1b,#7f1d1d)',
                     boxShadow: '0 4px 16px rgba(153,27,27,0.4)',
+                    cursor: challengingId === char.id ? 'not-allowed' : 'pointer',
                   }}>
-                  {challengingId === char.id ? '...' : '⚔ RETAR'}
+                  {challengingId === char.id ? '...' : 'RETAR'}
                 </button>
               )}
             </div>

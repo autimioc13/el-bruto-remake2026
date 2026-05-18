@@ -1,3 +1,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Design tokens ────────────────────────────────────────────────── */
+:root {
+  --bg-primary:   #0c0a09;
+  --bg-card:      rgba(20, 14, 4, 0.97);
+  --border-gold:  rgba(180, 130, 20, 0.25);
+  --gold:         #f59e0b;
+  --gold-dim:     #b45309;
+  --text-muted:   #6b7280;
+  --glow-gold:    0 0 24px rgba(245, 158, 11, 0.35);
+  --glow-red:     0 0 24px rgba(153, 27, 27, 0.45);
+}
+
+/* ── Breathing animation (used by BruteRenderer + CharacterSprite) ── */
+@keyframes brute-breathe {
+  0%, 100% { transform: scaleY(1) translateY(0px); }
+  45%, 55%  { transform: scaleY(0.97) translateY(0.6px); }
+}
+
+/* ── Glow pulse (used by gold CTAs) ─────────────────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: var(--glow-gold); }
+  50%       { box-shadow: 0 0 40px rgba(245, 158, 11, 0.55); }
+}
+
+/* ── Respect reduced-motion preference ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Global cursor ───────────────────────────────────────────────── */
+button, [role="button"], a { cursor: pointer; }
+
+/* ── Scrollbar (dark gold theme) ─────────────────────────────────── */
+::-webkit-scrollbar              { width: 5px; height: 5px; }
+::-webkit-scrollbar-track        { background: #0c0a09; }
+::-webkit-scrollbar-thumb        { background: rgba(180, 130, 20, 0.4); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover  { background: rgba(245, 158, 11, 0.6); }
+
+/* ── Text selection ──────────────────────────────────────────────── */
+::selection { background: rgba(245, 158, 11, 0.28); color: #fef3c7; }
+
+/* ── Focus ring (accessible, game-themed) ─────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(245, 158, 11, 0.7);
+  outline-offset: 2px;
+}
+
+/* ── Base body ───────────────────────────────────────────────────── */
+body {
+  background: var(--bg-primary);
+  color: #e7e5e4;
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

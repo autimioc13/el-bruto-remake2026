@@ -107,7 +107,7 @@ export default function Profile() {
               boxShadow: '0 8px 30px rgba(153,27,27,0.5)',
               border: '1px solid rgba(220,38,38,0.3)',
             }}>
-            ⚔ BUSCAR RIVALES
+            BUSCAR RIVALES
           </button>
         )}
 
@@ -193,8 +193,14 @@ export default function Profile() {
             {character.pet ? (
               <div className="flex items-center gap-3 p-2 rounded-lg"
                 style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-xl"
-                  style={{ background: 'rgba(34,197,94,0.15)' }}>🐾</div>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(34,197,94,0.15)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/>
+                  <circle cx="4" cy="8" r="2"/><circle cx="4" cy="16" r="2"/>
+                  <path d="M11.5 12c-1.4-2-2.5-3-4-3-2.5 0-4 2-4 4 0 3.5 4 7 8.5 7s8.5-3.5 8.5-7c0-2-1.5-4-4-4-1.5 0-2.6 1-4 3z"/>
+                </svg>
+              </div>
                 <div>
                   <p className="font-bold text-stone-200 text-sm leading-tight">{character.pet.name}</p>
                   <p className="text-xs text-stone-500">Evolución {character.pet.evolution_stage}</p>
@@ -236,7 +242,7 @@ export default function Profile() {
               boxShadow: '0 8px 30px rgba(153,27,27,0.5)',
               border: '1px solid rgba(220,38,38,0.3)',
             }}>
-            ⚔ RETAR A {character.name.toUpperCase()}
+            RETAR A {character.name.toUpperCase()}
           </button>
         )}
       </div>
