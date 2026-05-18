@@ -74,6 +74,13 @@ export default function Profile() {
           </div>
         </div>
 
+        {isOwnProfile && (
+          <button onClick={() => navigate('/ranking')}
+            className="w-full py-4 bg-red-700 text-white font-bold text-xl rounded-lg hover:bg-red-800 mb-4 shadow-lg transition-colors">
+            ⚔ BUSCAR RIVALES
+          </button>
+        )}
+
         <div className="bg-amber-100 border-2 border-amber-700 rounded-lg p-5 mb-4">
           <div className="flex items-center gap-5">
             <CharacterSprite
