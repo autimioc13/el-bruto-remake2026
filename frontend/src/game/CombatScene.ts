@@ -5,6 +5,7 @@ export interface CharacterConfig {
   skinColor: string;
   hairColor: string;
   rank: string;
+  hairStyle?: string;
   weaponType?: string | null;
   petType?: string | null;
   imgEl?: HTMLImageElement;

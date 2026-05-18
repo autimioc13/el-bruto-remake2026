@@ -8,6 +8,12 @@ const HAIR_COLORS = [
   '#1a0a00', '#3d2005', '#8B4513', '#c8851c', '#FFD700',
   '#FF4500', '#dc143c', '#4B0082', '#808080', '#ffffff',
 ];
+const HAIR_STYLES: { id: string; label: string; icon: string }[] = [
+  { id: 'short',  label: 'Corto',   icon: '💇' },
+  { id: 'long',   label: 'Largo',   icon: '🦱' },
+  { id: 'mohawk', label: 'Mohawk',  icon: '🤘' },
+  { id: 'bald',   label: 'Rapado',  icon: '🧑‍🦲' },
+];
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -17,6 +23,7 @@ export default function CreateCharacter() {
   const [name, setName] = useState('');
   const [skinColor, setSkinColor] = useState(SKIN_COLORS[0]);
   const [hairColor, setHairColor] = useState(HAIR_COLORS[0]);
+  const [hairStyle, setHairStyle] = useState('short');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -24,6 +31,7 @@ export default function CreateCharacter() {
   const randomize = () => {
     setSkinColor(pick(SKIN_COLORS));
     setHairColor(pick(HAIR_COLORS));
+    setHairStyle(pick(HAIR_STYLES).id);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +44,7 @@ export default function CreateCharacter() {
         gender: 'male',
         hair_color: hairColor,
         skin_color: skinColor,
-        hair_style: 'short',
+        hair_style: hairStyle,
       });
       navigate('/profile');
     } catch (err: any) {
@@ -81,7 +89,7 @@ export default function CreateCharacter() {
                 minWidth: 110,
                 boxShadow: 'inset 0 0 30px rgba(0,0,0,0.6)',
               }}>
-              <CharacterSprite skinColor={skinColor} hairColor={hairColor} rank="Bruto" size={84} />
+              <CharacterSprite skinColor={skinColor} hairColor={hairColor} rank="Bruto" hairStyle={hairStyle} size={84} />
             </div>
             <button type="button" onClick={randomize}
               className="px-5 py-2 text-sm font-black rounded-lg transition-all hover:opacity-90 active:scale-95"
@@ -134,6 +142,24 @@ export default function CreateCharacter() {
                         : '0 0 0 2px rgba(255,255,255,0.12)',
                     }}
                     className={`w-9 h-9 rounded-full transition-all ${hairColor === c ? 'scale-110' : 'hover:scale-105'}`} />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest">Peinado</label>
+              <div className="flex gap-2">
+                {HAIR_STYLES.map((s) => (
+                  <button key={s.id} type="button" onClick={() => setHairStyle(s.id)}
+                    className="flex-1 py-2 flex flex-col items-center gap-0.5 rounded-lg text-xs font-bold transition-all"
+                    style={{
+                      background: hairStyle === s.id ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.3)',
+                      border: `1px solid ${hairStyle === s.id ? 'rgba(245,158,11,0.6)' : 'rgba(255,255,255,0.08)'}`,
+                      color: hairStyle === s.id ? '#f59e0b' : '#6b7280',
+                    }}>
+                    <span className="text-lg">{s.icon}</span>
+                    <span>{s.label}</span>
+                  </button>
                 ))}
               </div>
             </div>

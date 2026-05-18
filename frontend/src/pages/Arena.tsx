@@ -39,11 +39,13 @@ async function preloadSprites(combatData: CombatData): Promise<CombatSceneConfig
     combatData.attacker_appearance?.skin_color ?? '#FDBCB4',
     combatData.attacker_appearance?.hair_color ?? '#000000',
     combatData.attacker_rank ?? 'Bruto',
+    (combatData.attacker_appearance as any)?.hair_style ?? 'short',
   );
   const defSvg = characterSVG(
     combatData.defender_appearance?.skin_color ?? '#FDBCB4',
     combatData.defender_appearance?.hair_color ?? '#000000',
     combatData.defender_rank ?? 'Bruto',
+    (combatData.defender_appearance as any)?.hair_style ?? 'short',
   );
 
   const loads: Promise<HTMLImageElement | undefined>[] = [
@@ -63,9 +65,13 @@ async function preloadSprites(combatData: CombatData): Promise<CombatSceneConfig
 
   const [atkImg, defImg, atkWpnImg, defWpnImg, atkPetImg, defPetImg] = await Promise.all(loads);
 
+  const atkApp = combatData.attacker_appearance as any;
+  const defApp = combatData.defender_appearance as any;
+
   return {
-    skinColor: combatData.attacker_appearance?.skin_color ?? '#FDBCB4',
-    hairColor: combatData.attacker_appearance?.hair_color ?? '#000000',
+    skinColor: atkApp?.skin_color ?? '#FDBCB4',
+    hairColor: atkApp?.hair_color ?? '#000000',
+    hairStyle: atkApp?.hair_style ?? 'short',
     rank: combatData.attacker_rank ?? 'Bruto',
     weaponType: combatData.attacker_weapon_type ?? null,
     petType: combatData.attacker_pet_type ?? null,
@@ -73,8 +79,9 @@ async function preloadSprites(combatData: CombatData): Promise<CombatSceneConfig
     weaponImgEl: atkWpnImg as HTMLImageElement | undefined,
     petImgEl: atkPetImg as HTMLImageElement | undefined,
     def: {
-      skinColor: combatData.defender_appearance?.skin_color ?? '#FDBCB4',
-      hairColor: combatData.defender_appearance?.hair_color ?? '#000000',
+      skinColor: defApp?.skin_color ?? '#FDBCB4',
+      hairColor: defApp?.hair_color ?? '#000000',
+      hairStyle: defApp?.hair_style ?? 'short',
       rank: combatData.defender_rank ?? 'Bruto',
       weaponType: combatData.defender_weapon_type ?? null,
       petType: combatData.defender_pet_type ?? null,
@@ -101,6 +108,7 @@ async function buildGame(
       skinColor: sprites.skinColor,
       hairColor: sprites.hairColor,
       rank: sprites.rank,
+      hairStyle: sprites.hairStyle,
       weaponType: sprites.weaponType,
       petType: sprites.petType,
       imgEl: sprites.imgEl,

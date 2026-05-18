@@ -230,6 +230,15 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   });
 });
 
+function levelToRank(level: number): string {
+  if (level >= 25) return 'Cazador';
+  if (level >= 20) return 'Berserker';
+  if (level >= 15) return 'Monje';
+  if (level >= 10) return 'Asesino';
+  if (level >= 5) return 'Gladiador';
+  return 'Bruto';
+}
+
 router.get('/:id', async (req, res: Response) => {
   const { data, error } = await supabase
     .from('combat_logs')
@@ -242,8 +251,33 @@ router.get('/:id', async (req, res: Response) => {
     return;
   }
 
+  const [atkRes, defRes] = await Promise.all([
+    supabase.from('characters').select('appearance, level, character_weapons(equipped, weapons(weapon_type)), character_pets(pets(pet_type))')
+      .eq('id', data.attacker_id).single(),
+    supabase.from('characters').select('appearance, level, character_weapons(equipped, weapons(weapon_type)), character_pets(pets(pet_type))')
+      .eq('id', data.defender_id).single(),
+  ]);
+
+  const atk = atkRes.data as any;
+  const def = defRes.data as any;
+
+  const atkWeapon = atk?.character_weapons?.find((w: any) => w.equipped)?.weapons;
+  const defWeapon = def?.character_weapons?.find((w: any) => w.equipped)?.weapons;
+
   const winner_name = data.winner_id === data.attacker_id ? data.attacker_name : data.defender_name;
-  res.json({ ...data, winner_name });
+
+  res.json({
+    ...data,
+    winner_name,
+    attacker_appearance: atk?.appearance ?? null,
+    defender_appearance: def?.appearance ?? null,
+    attacker_rank: levelToRank(atk?.level ?? 1),
+    defender_rank: levelToRank(def?.level ?? 1),
+    attacker_weapon_type: atkWeapon?.weapon_type ?? null,
+    defender_weapon_type: defWeapon?.weapon_type ?? null,
+    attacker_pet_type: atk?.character_pets?.[0]?.pets?.pet_type ?? null,
+    defender_pet_type: def?.character_pets?.[0]?.pets?.pet_type ?? null,
+  });
 });
 
 export default router;

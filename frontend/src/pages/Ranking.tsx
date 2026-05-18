@@ -10,7 +10,7 @@ interface RankingEntry {
   level: number;
   wins: number;
   losses: number;
-  appearance: { skin_color: string; hair_color: string };
+  appearance: { skin_color: string; hair_color: string; hair_style?: string };
   rank?: string;
   clan?: { name: string } | null;
 }
@@ -96,6 +96,7 @@ export default function Ranking() {
                   skinColor={char.appearance.skin_color}
                   hairColor={char.appearance.hair_color}
                   rank={char.rank ?? 'Bruto'}
+                  hairStyle={char.appearance.hair_style ?? 'short'}
                   size={38}
                 />
               </div>

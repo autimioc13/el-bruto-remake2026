@@ -121,6 +121,7 @@ export default function Profile() {
                 skinColor={character.appearance.skin_color}
                 hairColor={character.appearance.hair_color}
                 rank={character.rank}
+                hairStyle={character.appearance.hair_style}
                 size={72}
               />
             </div>
