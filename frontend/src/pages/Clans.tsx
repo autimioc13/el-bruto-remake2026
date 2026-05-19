@@ -15,7 +15,6 @@ const ShieldIcon = () => (
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
   </svg>
 );
-
 const SwordIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>
@@ -24,44 +23,54 @@ const SwordIcon = () => (
     <line x1="19" y1="21" x2="21" y2="19"/>
   </svg>
 );
-
 const UsersIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
     <circle cx="9" cy="7" r="4"/>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
   </svg>
 );
-
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
   </svg>
 );
-
 const ArrowLeftIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
   </svg>
 );
+const TrophyIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="8 6 4 6 4 14 8 14"/><polyline points="16 6 20 6 20 14 16 14"/>
+    <path d="M8 6h8v8a4 4 0 0 1-8 0V6Z"/>
+    <line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>
+  </svg>
+);
 
-const rankMedals: Record<number, string> = { 1: '#f59e0b', 2: '#9ca3af', 3: '#b45309' };
+const rankMedals: Record<number, string> = { 0: '#f59e0b', 1: '#9ca3af', 2: '#b45309' };
 
 export default function Clans() {
   const [clans, setClans] = useState<Clan[]>([]);
+  const [myClanId, setMyClanId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [mode, setMode] = useState<'list' | 'create'>('list');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [attacking, setAttacking] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const load = () =>
     api.get('/clans').then(({ data }) => setClans(data)).catch(() => {});
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.get('/characters/me')
+      .then(({ data }) => setMyClanId(data.clan?.id ?? null))
+      .catch(() => {});
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,11 +81,10 @@ export default function Clans() {
       setMode('list');
       setNewName(''); setNewDesc('');
       load();
+      api.get('/characters/me').then(({ data }) => setMyClanId(data.clan?.id ?? null)).catch(() => {});
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al crear clan');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleJoin = async (clanId: string) => {
@@ -84,6 +92,7 @@ export default function Clans() {
     try {
       await api.post(`/clans/${clanId}/join`);
       setSuccess('¡Te uniste al clan!');
+      setMyClanId(clanId);
       load();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al unirse');
@@ -95,9 +104,22 @@ export default function Clans() {
     try {
       await api.post('/clans/leave');
       setSuccess('Saliste del clan');
+      setMyClanId(null);
       load();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al salir');
+    }
+  };
+
+  const handleAttack = async (clanId: string) => {
+    setAttacking(clanId); setError('');
+    try {
+      const { data: target } = await api.get(`/clan-wars/target/${clanId}`);
+      const { data: combat } = await api.post('/combat', { defender_id: target.defender_id });
+      navigate(`/arena/${combat.combat_id}`);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'No hay rivales disponibles en ese clan');
+      setAttacking(null);
     }
   };
 
@@ -108,25 +130,36 @@ export default function Clans() {
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/profile')}
-              className="flex items-center gap-1.5 text-stone-500 hover:text-amber-400 transition-colors duration-200 text-sm"
-              style={{ cursor: 'pointer' }}>
-              <ArrowLeftIcon />
-              Mi perfil
+          <button onClick={() => navigate('/profile')}
+            className="flex items-center gap-1.5 text-stone-500 hover:text-amber-400 transition-colors duration-200 text-sm"
+            style={{ cursor: 'pointer' }}>
+            <ArrowLeftIcon />
+            Mi perfil
+          </button>
+          <div className="flex gap-2">
+            <button onClick={() => navigate('/clan-wars')}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all hover:opacity-90"
+              style={{
+                background: 'rgba(153,27,27,0.2)',
+                border: '1px solid rgba(153,27,27,0.35)',
+                color: '#fca5a5',
+                cursor: 'pointer',
+              }}>
+              <TrophyIcon />
+              Guerras
+            </button>
+            <button
+              onClick={() => { setMode(mode === 'create' ? 'list' : 'create'); setError(''); setSuccess(''); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 hover:opacity-90 active:scale-95"
+              style={{
+                background: mode === 'create' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #d97706, #b45309)',
+                color: mode === 'create' ? '#9ca3af' : '#0c0a09',
+                border: mode === 'create' ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                cursor: 'pointer',
+              }}>
+              {mode === 'create' ? 'Ver lista' : <><PlusIcon /><span>Fundar clan</span></>}
             </button>
           </div>
-          <button
-            onClick={() => { setMode(mode === 'create' ? 'list' : 'create'); setError(''); setSuccess(''); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 hover:opacity-90 active:scale-95"
-            style={{
-              background: mode === 'create' ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #d97706, #b45309)',
-              color: mode === 'create' ? '#9ca3af' : '#0c0a09',
-              border: mode === 'create' ? '1px solid rgba(255,255,255,0.1)' : 'none',
-              cursor: 'pointer',
-            }}>
-            {mode === 'create' ? 'Ver lista' : <><PlusIcon /><span>Fundar clan</span></>}
-          </button>
         </div>
 
         {/* Title */}
@@ -164,48 +197,27 @@ export default function Clans() {
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#6b7280' }}>
                   Nombre del clan
                 </label>
-                <input
-                  value={newName} onChange={e => setNewName(e.target.value)}
+                <input value={newName} onChange={e => setNewName(e.target.value)}
                   placeholder="Ej: Los Inmortales" maxLength={50} required
                   className="w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200"
-                  style={{
-                    background: 'rgba(0,0,0,0.4)',
-                    border: '1px solid rgba(180,130,20,0.2)',
-                    color: '#e7e5e4',
-                    outline: 'none',
-                  }}
+                  style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(180,130,20,0.2)', color: '#e7e5e4', outline: 'none' }}
                   onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(180,130,20,0.2)'; e.target.style.boxShadow = 'none'; }}
-                />
+                  onBlur={e => { e.target.style.borderColor = 'rgba(180,130,20,0.2)'; e.target.style.boxShadow = 'none'; }} />
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#6b7280' }}>
                   Descripción <span style={{ color: '#4b5563' }}>(opcional)</span>
                 </label>
-                <input
-                  value={newDesc} onChange={e => setNewDesc(e.target.value)}
+                <input value={newDesc} onChange={e => setNewDesc(e.target.value)}
                   placeholder="La historia de tu clan..."
                   className="w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200"
-                  style={{
-                    background: 'rgba(0,0,0,0.4)',
-                    border: '1px solid rgba(180,130,20,0.2)',
-                    color: '#e7e5e4',
-                    outline: 'none',
-                  }}
+                  style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(180,130,20,0.2)', color: '#e7e5e4', outline: 'none' }}
                   onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(180,130,20,0.2)'; e.target.style.boxShadow = 'none'; }}
-                />
+                  onBlur={e => { e.target.style.borderColor = 'rgba(180,130,20,0.2)'; e.target.style.boxShadow = 'none'; }} />
               </div>
-              <button
-                type="submit"
-                disabled={loading}
+              <button type="submit" disabled={loading}
                 className="w-full py-3.5 rounded-xl font-black text-sm transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-50"
-                style={{
-                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                  color: '#0c0a09',
-                  boxShadow: '0 4px 16px rgba(245,158,11,0.3)',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                }}>
+                style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#0c0a09', boxShadow: '0 4px 16px rgba(245,158,11,0.3)', cursor: loading ? 'not-allowed' : 'pointer' }}>
                 {loading ? 'Fundando...' : '¡Fundar clan!'}
               </button>
             </form>
@@ -216,18 +228,22 @@ export default function Clans() {
         <div className="space-y-3">
           {clans.map((clan, i) => {
             const rank = i + 1;
-            const medalColor = rankMedals[rank];
+            const medalColor = rankMedals[i];
             const members = clan.clan_members?.[0]?.count ?? 0;
+            const isOwn = clan.id === myClanId;
+            const isRival = !!myClanId && !isOwn;
 
             return (
               <div key={clan.id}
                 className="rounded-2xl p-4 transition-all duration-200"
                 style={{
-                  background: 'rgba(20,14,4,0.97)',
-                  border: rank <= 3
+                  background: isOwn ? 'rgba(180,130,20,0.07)' : 'rgba(20,14,4,0.97)',
+                  border: isOwn
+                    ? '1px solid rgba(180,130,20,0.35)'
+                    : medalColor
                     ? `1px solid ${medalColor}40`
                     : '1px solid rgba(180,130,20,0.15)',
-                  boxShadow: rank === 1 ? '0 0 20px rgba(245,158,11,0.08)' : 'none',
+                  boxShadow: rank === 1 ? '0 0 20px rgba(245,158,11,0.06)' : 'none',
                 }}>
                 <div className="flex items-center gap-4">
 
@@ -247,41 +263,54 @@ export default function Clans() {
                       <span className="font-black truncate" style={{ color: rank === 1 ? '#f59e0b' : '#e7e5e4' }}>
                         {clan.name}
                       </span>
+                      {isOwn && (
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(180,130,20,0.2)', color: '#f59e0b' }}>
+                          Mi clan
+                        </span>
+                      )}
                     </div>
                     {clan.description && (
                       <p className="text-xs truncate mb-1" style={{ color: '#6b7280' }}>{clan.description}</p>
                     )}
                     <div className="flex items-center gap-3 text-xs" style={{ color: '#4b5563' }}>
-                      <span className="flex items-center gap-1">
-                        <UsersIcon />{members} miembro{members !== 1 ? 's' : ''}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <SwordIcon />{clan.total_wins} victorias
-                      </span>
+                      <span className="flex items-center gap-1"><UsersIcon />{members} miembro{members !== 1 ? 's' : ''}</span>
+                      <span className="flex items-center gap-1"><SwordIcon />{clan.total_wins} victorias</span>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-2 flex-shrink-0">
-                    <button onClick={() => handleJoin(clan.id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:opacity-90 active:scale-95"
-                      style={{
-                        background: 'linear-gradient(135deg, #d97706, #b45309)',
-                        color: '#0c0a09',
-                        cursor: 'pointer',
-                      }}>
-                      Unirse
-                    </button>
-                    <button onClick={handleLeave}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:opacity-80 active:scale-95"
-                      style={{
-                        background: 'rgba(255,255,255,0.06)',
-                        color: '#6b7280',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        cursor: 'pointer',
-                      }}>
-                      Salir
-                    </button>
+                    {isOwn && (
+                      <button onClick={handleLeave}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:opacity-80 active:scale-95"
+                        style={{ background: 'rgba(255,255,255,0.06)', color: '#6b7280', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+                        Salir
+                      </button>
+                    )}
+                    {!myClanId && (
+                      <button onClick={() => handleJoin(clan.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:opacity-90 active:scale-95"
+                        style={{ background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#0c0a09', cursor: 'pointer' }}>
+                        Unirse
+                      </button>
+                    )}
+                    {isRival && (
+                      <button
+                        onClick={() => handleAttack(clan.id)}
+                        disabled={attacking === clan.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 hover:opacity-90 active:scale-95 disabled:opacity-40"
+                        style={{
+                          background: 'linear-gradient(135deg, #991b1b, #7f1d1d)',
+                          color: 'white',
+                          boxShadow: '0 2px 8px rgba(153,27,27,0.4)',
+                          cursor: attacking === clan.id ? 'not-allowed' : 'pointer',
+                        }}>
+                        {attacking === clan.id
+                          ? '...'
+                          : <><SwordIcon /><span>Atacar</span></>}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -290,15 +319,9 @@ export default function Clans() {
 
           {clans.length === 0 && (
             <div className="text-center py-16">
-              <div className="mb-3" style={{ color: '#374151' }}>
-                <ShieldIcon />
-              </div>
-              <p className="font-bold text-sm" style={{ color: '#4b5563' }}>
-                No hay clanes todavía
-              </p>
-              <p className="text-xs mt-1" style={{ color: '#374151' }}>
-                ¡Funda el primero y lidera la hermandad!
-              </p>
+              <div className="mb-3 flex justify-center" style={{ color: '#374151' }}><ShieldIcon /></div>
+              <p className="font-bold text-sm" style={{ color: '#4b5563' }}>No hay clanes todavía</p>
+              <p className="text-xs mt-1" style={{ color: '#374151' }}>¡Funda el primero y lidera la hermandad!</p>
             </div>
           )}
         </div>

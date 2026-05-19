@@ -10,6 +10,7 @@ import Inventory from './pages/Inventory';
 import Pets from './pages/Pets';
 import Missions from './pages/Missions';
 import Achievements from './pages/Achievements';
+import ClanWars from './pages/ClanWars';
 
 export default function App() {
   const isLoggedIn = !!localStorage.getItem('session');
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/pets" element={<Pets />} />
         <Route path="/missions" element={<Missions />} />
         <Route path="/achievements" element={<Achievements />} />
+        <Route path="/clan-wars" element={<ClanWars />} />
       </Routes>
     </BrowserRouter>
   );

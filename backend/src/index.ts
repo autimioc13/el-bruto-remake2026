@@ -9,6 +9,7 @@ import weaponRoutes from './routes/weapons';
 import petRoutes from './routes/pets';
 import clanRoutes from './routes/clans';
 import missionRoutes from './routes/missions';
+import clanWarRoutes from './routes/clan-wars';
 
 const app = express();
 app.use(cors());
@@ -21,6 +22,7 @@ app.use('/weapons', weaponRoutes);
 app.use('/pets', petRoutes);
 app.use('/clans', clanRoutes);
 app.use('/missions', missionRoutes);
+app.use('/clan-wars', clanWarRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

@@ -221,6 +221,9 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
     }
   }
 
+  // Track clan war scores fire-and-forget
+  recordClanWarBattle(atk.id, def.id, result.winner_id).catch(() => {});
+
   res.json({
     combat_id: combatLog.id,
     winner_id: result.winner_id,
@@ -230,6 +233,46 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
     level_up: levelUpUnlock,
   });
 });
+
+async function recordClanWarBattle(atkCharId: string, defCharId: string, winnerCharId: string) {
+  const [atkClanRes, defClanRes] = await Promise.all([
+    supabase.from('clan_members').select('clan_id').eq('character_id', atkCharId).maybeSingle(),
+    supabase.from('clan_members').select('clan_id').eq('character_id', defCharId).maybeSingle(),
+  ]);
+
+  const atkClanId = (atkClanRes.data as any)?.clan_id;
+  const defClanId = (defClanRes.data as any)?.clan_id;
+  if (!atkClanId || !defClanId || atkClanId === defClanId) return;
+
+  const winnerClanId = winnerCharId === atkCharId ? atkClanId : defClanId;
+
+  const { data: existing } = await supabase
+    .from('clan_wars')
+    .select('*')
+    .or(`and(clan_a_id.eq.${atkClanId},clan_b_id.eq.${defClanId}),and(clan_a_id.eq.${defClanId},clan_b_id.eq.${atkClanId})`)
+    .maybeSingle();
+
+  const now = new Date().toISOString();
+
+  if (existing) {
+    const isA = (existing as any).clan_a_id === winnerClanId;
+    await supabase.from('clan_wars').update({
+      wins_a: (existing as any).wins_a + (isA ? 1 : 0),
+      wins_b: (existing as any).wins_b + (isA ? 0 : 1),
+      total_battles: (existing as any).total_battles + 1,
+      last_battle_at: now,
+    }).eq('id', (existing as any).id);
+  } else {
+    await supabase.from('clan_wars').insert({
+      clan_a_id: atkClanId,
+      clan_b_id: defClanId,
+      wins_a: atkClanId === winnerClanId ? 1 : 0,
+      wins_b: defClanId === winnerClanId ? 1 : 0,
+      total_battles: 1,
+      last_battle_at: now,
+    });
+  }
+}
 
 function levelToRank(level: number): string {
   if (level >= 25) return 'Cazador';
