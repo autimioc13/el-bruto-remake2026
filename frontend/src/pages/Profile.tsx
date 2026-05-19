@@ -111,6 +111,53 @@ export default function Profile() {
           </button>
         )}
 
+        {/* Quick nav */}
+        {isOwnProfile && (
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => navigate('/inventory')}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95"
+              style={{
+                background: 'rgba(20,14,4,0.97)',
+                border: '1px solid rgba(180,130,20,0.2)',
+                cursor: 'pointer',
+              }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(245,158,11,0.12)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>
+                  <line x1="13" y1="19" x2="19" y2="13"/>
+                  <line x1="16" y1="16" x2="20" y2="20"/>
+                  <line x1="19" y1="21" x2="21" y2="19"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="font-black text-sm text-stone-200">Inventario</p>
+                <p className="text-xs" style={{ color: '#6b7280' }}>Armas y equipo</p>
+              </div>
+            </button>
+            <button onClick={() => navigate('/pets')}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95"
+              style={{
+                background: 'rgba(20,14,4,0.97)',
+                border: '1px solid rgba(34,197,94,0.15)',
+                cursor: 'pointer',
+              }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(34,197,94,0.1)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/>
+                  <circle cx="4" cy="8" r="2"/><circle cx="4" cy="16" r="2"/>
+                  <path d="M11.5 12c-1.4-2-2.5-3-4-3-2.5 0-4 2-4 4 0 3.5 4 7 8.5 7s8.5-3.5 8.5-7c0-2-1.5-4-4-4-1.5 0-2.6 1-4 3z"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="font-black text-sm text-stone-200">Mascotas</p>
+                <p className="text-xs" style={{ color: '#6b7280' }}>Compañeros de batalla</p>
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* Character hero card */}
         <div className="rounded-2xl p-5 flex items-center gap-5"
           style={{ background: 'rgba(28,20,4,0.9)', border: '1px solid rgba(180,130,20,0.25)' }}>

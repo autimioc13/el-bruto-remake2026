@@ -6,6 +6,8 @@ import Arena from './pages/Arena';
 import Ranking from './pages/Ranking';
 import Replay from './pages/Replay';
 import Clans from './pages/Clans';
+import Inventory from './pages/Inventory';
+import Pets from './pages/Pets';
 
 export default function App() {
   const isLoggedIn = !!localStorage.getItem('session');
@@ -21,6 +23,8 @@ export default function App() {
         <Route path="/ranking" element={<Ranking />} />
         <Route path="/replay/:combatId" element={<Replay />} />
         <Route path="/clans" element={<Clans />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/pets" element={<Pets />} />
       </Routes>
     </BrowserRouter>
   );
