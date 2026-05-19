@@ -240,6 +240,40 @@ function levelToRank(level: number): string {
   return 'Bruto';
 }
 
+router.get('/history', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { data: char } = await supabase
+    .from('characters')
+    .select('id')
+    .eq('user_id', req.userId!)
+    .single();
+
+  if (!char) { res.status(404).json({ error: 'Character not found' }); return; }
+
+  const { data, error } = await supabase
+    .from('combat_logs')
+    .select('id, attacker_id, defender_id, winner_id, attacker_name, defender_name, created_at')
+    .or(`attacker_id.eq.${char.id},defender_id.eq.${char.id}`)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) { res.status(500).json({ error: error.message }); return; }
+  res.json(data ?? []);
+});
+
+router.get('/history/:characterId', async (req, res: Response) => {
+  const { characterId } = req.params;
+
+  const { data, error } = await supabase
+    .from('combat_logs')
+    .select('id, attacker_id, defender_id, winner_id, attacker_name, defender_name, created_at')
+    .or(`attacker_id.eq.${characterId},defender_id.eq.${characterId}`)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) { res.status(500).json({ error: error.message }); return; }
+  res.json(data ?? []);
+});
+
 router.get('/:id', async (req, res: Response) => {
   const { data, error } = await supabase
     .from('combat_logs')

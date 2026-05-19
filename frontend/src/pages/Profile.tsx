@@ -7,6 +7,7 @@ import CharacterSprite from '../components/CharacterSprite';
 import BruteRenderer from '../components/BruteRenderer';
 import RankBadge from '../components/RankBadge';
 import WeaponIcon from '../components/WeaponIcon';
+import CombatHistory from '../components/CombatHistory';
 
 interface SkillEntry {
   skill_id: string;
@@ -71,27 +72,38 @@ export default function Profile() {
       <div className="sticky top-0 z-10 px-4 py-3 flex justify-between items-center"
         style={{ background: 'rgba(10,8,0,0.95)', borderBottom: '1px solid rgba(180,130,20,0.2)', backdropFilter: 'blur(10px)' }}>
         <div className="flex items-center gap-3">
+          {!isOwnProfile && (
+            <button onClick={() => navigate(-1)}
+              className="flex items-center gap-1 text-stone-500 hover:text-amber-400 transition-colors duration-200 mr-1"
+              style={{ cursor: 'pointer' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+              </svg>
+            </button>
+          )}
           <span className="text-xl font-black text-amber-400">{character.name}</span>
           <RankBadge rank={character.rank} />
           {character.clan && <span className="text-xs text-amber-700 font-bold">[{character.clan.name}]</span>}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => navigate('/clans')}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg text-amber-400 transition-all hover:text-amber-300"
-            style={{ background: 'rgba(180,130,20,0.15)', border: '1px solid rgba(180,130,20,0.2)' }}>
-            Clanes
-          </button>
-          <button onClick={() => navigate('/ranking')}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg text-amber-400 transition-all hover:text-amber-300"
-            style={{ background: 'rgba(180,130,20,0.15)', border: '1px solid rgba(180,130,20,0.2)' }}>
-            Ranking
-          </button>
           {isOwnProfile && (
-            <button onClick={() => { localStorage.removeItem('session'); navigate('/'); }}
-              className="px-3 py-1.5 text-xs font-bold rounded-lg text-stone-400 hover:text-stone-300 transition-all"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              Salir
-            </button>
+            <>
+              <button onClick={() => navigate('/clans')}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg text-amber-400 transition-all hover:text-amber-300"
+                style={{ background: 'rgba(180,130,20,0.15)', border: '1px solid rgba(180,130,20,0.2)' }}>
+                Clanes
+              </button>
+              <button onClick={() => navigate('/ranking')}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg text-amber-400 transition-all hover:text-amber-300"
+                style={{ background: 'rgba(180,130,20,0.15)', border: '1px solid rgba(180,130,20,0.2)' }}>
+                Ranking
+              </button>
+              <button onClick={() => { localStorage.removeItem('session'); navigate('/'); }}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg text-stone-400 hover:text-stone-300 transition-all"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                Salir
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -292,6 +304,16 @@ export default function Profile() {
             RETAR A {character.name.toUpperCase()}
           </button>
         )}
+
+        {/* Combat history */}
+        <div className="rounded-xl p-4"
+          style={{ background: 'rgba(28,20,4,0.9)', border: '1px solid rgba(180,130,20,0.2)' }}>
+          <h2 className="text-sm font-black text-amber-600 uppercase tracking-widest mb-3">
+            Historial de combates
+          </h2>
+          <CombatHistory characterId={character.id} isOwn={isOwnProfile} />
+        </div>
+
       </div>
     </div>
   );
