@@ -8,6 +8,8 @@ import Replay from './pages/Replay';
 import Clans from './pages/Clans';
 import Inventory from './pages/Inventory';
 import Pets from './pages/Pets';
+import Missions from './pages/Missions';
+import Achievements from './pages/Achievements';
 
 export default function App() {
   const isLoggedIn = !!localStorage.getItem('session');
@@ -25,6 +27,8 @@ export default function App() {
         <Route path="/clans" element={<Clans />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/pets" element={<Pets />} />
+        <Route path="/missions" element={<Missions />} />
+        <Route path="/achievements" element={<Achievements />} />
       </Routes>
     </BrowserRouter>
   );
